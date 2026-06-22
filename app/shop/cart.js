@@ -1,9 +1,9 @@
 "use client";
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { FREE_SHIP } from "./config";
 
 const CartCtx = createContext(null);
 const KEY = "bsc-cart";
-const FREE_SHIP = 75;
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState([]);

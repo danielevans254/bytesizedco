@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import ProductArt from "./shop/ProductArt";
 
 /* ---- brand mark ---- */
 function Mark({ className }) {
@@ -336,6 +337,18 @@ export default function Page() {
         </section>
       </header>
 
+      <section id="drop" className="countdown-strip">
+        <div className="wrap reveal">
+          <span className="kicker">// DROP 001 LANDS IN</span>
+          <div className="countdown" id="countdown">
+            <div className="cd"><div className="num" data-d>00</div><div className="lbl">Days</div></div>
+            <div className="cd"><div className="num" data-h>00</div><div className="lbl">Hrs</div></div>
+            <div className="cd"><div className="num" data-m>00</div><div className="lbl">Min</div></div>
+            <div className="cd"><div className="num" data-s>00</div><div className="lbl">Sec</div></div>
+          </div>
+        </div>
+      </section>
+
       <section id="manifesto">
         <div className="wrap">
           <div className="manifesto-grid">
@@ -375,13 +388,13 @@ export default function Page() {
           <p className="lead" style={{ marginTop: 16 }}>Every drop pairs a physical object with a digital companion that keeps evolving. The object you own. The companion grows, and can&apos;t be switched off.</p>
           <div className="sig">
             <div className="sig-card">
-              <div className="sig-art phys">[ OBJECT ]</div>
+              <div className="sig-art phys"><ProductArt variant="play" /></div>
               <span className="tag">Physical</span><h3>A numbered sticker pack</h3>
               <p>Die-cut, matte, limited to 500, with an edition number on the card.</p>
             </div>
             <div className="sig-join">+</div>
             <div className="sig-card">
-              <div className="sig-art digi">[ COMPANION ]</div>
+              <div className="sig-art digi"><ProductArt variant="play" companion /></div>
               <span className="tag">Digital</span><h3>An evolving wallpaper set</h3>
               <p>Unlocked by the card&apos;s code. New drops add to the same space you own.</p>
             </div>
@@ -473,25 +486,6 @@ export default function Page() {
                   <div className="pick" key={n}><span className="pn">{n}</span><div><h4>{h}</h4><p>{p}</p></div></div>
                 ))}
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="drop">
-        <div className="wrap reveal">
-          <div className="drop">
-            <span className="badge"><i className="dot" style={{ marginRight: 9 }} /> DROP 001 · COMING SOON</span>
-            <h2>The first one is loading.</h2>
-            <p className="lead">500 numbered units. Founding members get first access, and founding-member pricing.</p>
-            <div className="locked">
-              <div className="lock-tile">LOCKED</div><div className="lock-tile">LOCKED</div><div className="lock-tile">LOCKED</div>
-            </div>
-            <div className="countdown" id="countdown">
-              <div className="cd"><div className="num" data-d>00</div><div className="lbl">Days</div></div>
-              <div className="cd"><div className="num" data-h>00</div><div className="lbl">Hrs</div></div>
-              <div className="cd"><div className="num" data-m>00</div><div className="lbl">Min</div></div>
-              <div className="cd"><div className="num" data-s>00</div><div className="lbl">Sec</div></div>
             </div>
           </div>
         </div>

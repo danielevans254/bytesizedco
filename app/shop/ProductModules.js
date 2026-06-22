@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Modal from "./Modal";
 
 /* smoothly-animated accordion (grid-rows 0fr→1fr) */
@@ -132,37 +132,52 @@ function ModuleBody({ m }) {
 
 export default function ProductModules({ modules = [] }) {
   const [openId, setOpenId] = useState(null);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const io = new IntersectionObserver(
+      (es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }),
+      { threshold: 0.12 }
+    );
+    ref.current.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
   if (!modules.length) return null;
 
   const inline = modules.filter((m) => m.display !== "modal");
   const modal = modules.filter((m) => m.display === "modal");
 
   return (
-    <div className="modules">
-      {/* modal triggers as a row of buttons */}
+    <div className="modules" ref={ref}>
       {modal.length > 0 && (
-        <div className="mod-triggers">
-          {modal.map((m, i) => (
-            <button key={i} className="btn btn-ghost" onClick={() => setOpenId(`${m.type}-${i}`)}>
-              {m.title || TITLES[m.type] || "View"} →
-            </button>
-          ))}
+        <div className="reveal">
+          <div className="mod-triggers">
+            {modal.map((m, i) => (
+              <button key={i} className="btn btn-ghost" onClick={() => setOpenId(`${m.type}-${i}`)}>
+                {m.title || TITLES[m.type] || "View"} →
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* inline accordions */}
       {inline.map((m, i) => {
         const audio = m.type === "audio";
-        return audio ? (
-          <div className="mod-audio" key={i}><ModuleBody m={m} /></div>
-        ) : (
-          <Accordion key={i} title={m.title || TITLES[m.type] || "Details"} defaultOpen={i === 0}>
-            <ModuleBody m={m} />
-          </Accordion>
+        return (
+          <div className="reveal" key={i}>
+            {audio ? (
+              <div className="mod-audio"><ModuleBody m={m} /></div>
+            ) : (
+              <Accordion title={m.title || TITLES[m.type] || "Details"} defaultOpen={i === 0}>
+                <ModuleBody m={m} />
+              </Accordion>
+            )}
+          </div>
         );
       })}
 
-      {/* modals */}
       {modal.map((m, i) => (
         <Modal key={i} open={openId === `${m.type}-${i}`} onClose={() => setOpenId(null)} title={m.title || TITLES[m.type] || "Details"}>
           <ModuleBody m={m} />

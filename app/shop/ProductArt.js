@@ -15,7 +15,8 @@ function Frame({ children }) {
   );
 }
 
-function Physical({ variant }) {
+function Physical({ variant, color }) {
+  const F = color || SUR;
   switch (variant) {
     case "carry":
       return (
@@ -23,7 +24,7 @@ function Physical({ variant }) {
           <rect x="120" y="150" width="360" height="160" rx="14" stroke={SH} strokeWidth="2" />
           <line x1="240" y1="150" x2="240" y2="310" stroke={LN} strokeWidth="2" />
           <line x1="360" y1="150" x2="360" y2="310" stroke={LN} strokeWidth="2" />
-          <rect x="150" y="185" width="60" height="40" rx="6" fill={SH} opacity="0.18" />
+          <rect x="150" y="185" width="60" height="40" rx="6" fill={F} opacity={color ? 0.85 : 0.18} />
           <circle cx="300" cy="232" r="22" stroke={LN} strokeWidth="2" />
           <rect x="392" y="190" width="56" height="80" rx="6" stroke={LN} strokeWidth="2" />
         </>
@@ -31,7 +32,7 @@ function Physical({ variant }) {
     case "wear":
       return (
         <>
-          <path d="M195 135 l55 28 50-18 50 18 55-28 32 66-52 18 v122 H215 V237 l-52-18z" stroke={SH} strokeWidth="2" fill={SUR} />
+          <path d="M195 135 l55 28 50-18 50 18 55-28 32 66-52 18 v122 H215 V237 l-52-18z" stroke={SH} strokeWidth="2" fill={F} />
           <line x1="300" y1="165" x2="300" y2="358" stroke={LN} strokeWidth="2" strokeDasharray="4 7" />
           <rect x="280" y="330" width="40" height="14" rx="3" stroke={SH} strokeWidth="1.5" opacity="0.7" />
         </>
@@ -76,7 +77,7 @@ function Physical({ variant }) {
       return (
         <>
           <circle cx="410" cy="150" r="26" fill={SH} opacity="0.2" />
-          <path d="M120 320 L240 165 L320 250 L380 200 L480 320 Z" stroke={SH} strokeWidth="2" fill={SUR} />
+          <path d="M120 320 L240 165 L320 250 L380 200 L480 320 Z" stroke={SH} strokeWidth="2" fill={F} />
           <path d="M240 165 L290 222 L260 250 L320 250" stroke={LN} strokeWidth="2" />
         </>
       );
@@ -84,7 +85,7 @@ function Physical({ variant }) {
       return (
         <>
           <circle cx="300" cy="220" r="92" stroke={LN} strokeWidth="2" />
-          <circle cx="300" cy="220" r="62" stroke={SH} strokeWidth="2" opacity="0.7" />
+          <circle cx="300" cy="220" r="62" stroke={SH} strokeWidth="2" opacity="0.7" fill={color || "none"} fillOpacity={color ? 0.16 : 0} />
           <path d="M150 220 h66 l18-46 30 96 24-66 18 32 h84" stroke={SH} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
         </>
       );
@@ -111,6 +112,6 @@ function Companion() {
   );
 }
 
-export default function ProductArt({ variant = "carry", companion = false }) {
-  return <Frame>{companion ? <Companion /> : <Physical variant={variant} />}</Frame>;
+export default function ProductArt({ variant = "carry", companion = false, color }) {
+  return <Frame>{companion ? <Companion /> : <Physical variant={variant} color={color} />}</Frame>;
 }

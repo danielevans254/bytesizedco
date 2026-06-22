@@ -1,10 +1,10 @@
 import { PRODUCTS } from "./products";
-import ProductArt from "./ProductArt";
-import QuickAdd from "./QuickAdd";
+import ShopBrowser from "./ShopBrowser";
+import RecentlyViewed from "./RecentlyViewed";
 
 export const metadata = {
   title: "Shop · Byte Sized Co.",
-  description: "Sample drops across every department — each a physical object paired with a digital companion.",
+  description: "Sample drops across every department, each a physical object paired with a digital companion.",
 };
 
 export default function ShopIndex() {
@@ -18,25 +18,8 @@ export default function ShopIndex() {
           A sample drop from each department. Every one is a numbered physical object, paired with a digital companion you keep.
         </p>
 
-        <div className="shop-grid">
-          {PRODUCTS.map((p) => (
-            <a className="pcard" key={p.slug} href={`/shop/${p.slug}`}>
-              <div className="thumb">
-                <ProductArt variant={p.art} />
-                <QuickAdd product={p} />
-              </div>
-              <div className="pbody">
-                <span className="dept">{p.deptTag}</span>
-                <h3>{p.name}</h3>
-                <p>{p.tagline}</p>
-                <div className="prow">
-                  <span className="pp">Physical + Digital</span>
-                  <span className="price-sm">from ${p.price}</span>
-                </div>
-              </div>
-            </a>
-          ))}
-        </div>
+        <ShopBrowser products={PRODUCTS} />
+        <RecentlyViewed />
       </div>
     </main>
   );

@@ -4,10 +4,12 @@
 //  - modules[] : content modules (inline accordion or modal) unique to the product type
 // The ProductConfigurator renders options; ProductModules renders modules.
 
+// digiPerk = the rarity-tiered digital companion (resolved in vault note 39-rarity-system):
+// rarer card unlocks a rarer companion. Utility/identity, never speculation.
 const tiers = (base) => [
-  { key: "standard", label: "Standard", gem: "◆", cls: "", rc: "standard", price: base, of: 500 },
-  { key: "rare", label: "Rare", gem: "◆◆", cls: "r-rare", rc: "rare", price: Math.round(base * 1.4), of: 150 },
-  { key: "founder", label: "Founder", gem: "◆◆◆", cls: "r-founder", rc: "founder", price: Math.round(base * 2), of: 50 },
+  { key: "standard", label: "Standard", gem: "◆", cls: "", rc: "standard", price: base, of: 500, digiPerk: null },
+  { key: "rare", label: "Rare", gem: "◆◆", cls: "r-rare", rc: "rare", price: Math.round(base * 1.4), of: 150, digiPerk: "Rare digital variant + earlier access to the evolving layer" },
+  { key: "founder", label: "Founder", gem: "◆◆◆", cls: "r-founder", rc: "founder", price: Math.round(base * 2), of: 50, digiPerk: "Founder-exclusive animated variant, earliest access, and perpetual status across drops" },
 ];
 
 const SIZE_GUIDE = {
@@ -237,7 +239,7 @@ const RAW = [
       ] },
     ],
     modules: [
-      { type: "program", display: "inline", data: { weeks: [["Week 1", "Foundation — full-body, 3 sessions, banded basics."], ["Week 2", "Build — added volume, mobility finisher, one conditioning day."]] } },
+      { type: "program", display: "inline", data: { weeks: [["Week 1", "Foundation. Full-body, 3 sessions, banded basics."], ["Week 2", "Build. Added volume, mobility finisher, one conditioning day."]] } },
       { type: "whatsInBox", display: "inline", data: { items: ["Resistance band(s)", "Steel shaker, 500 ml", "Flat zip case", "2-week program (digital)", "Macro tracker template (digital)"] } },
     ],
   },
