@@ -2,19 +2,44 @@
 import { useState } from "react";
 import { useCart } from "../cart";
 import ProductArt from "../ProductArt";
+import { readAttribution, track } from "../../attribution";
 
 export default function Checkout() {
   const { items, subtotal, setQty, remove, clear, count, FREE_SHIP } = useCart();
   const [done, setDone] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", address: "" });
 
   const valid = form.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
   const shipping = subtotal === 0 || subtotal >= FREE_SHIP ? 0 : 6;
   const total = subtotal + shipping;
 
-  const place = (e) => {
+  const place = async (e) => {
     e.preventDefault();
-    if (!valid) return;
+    if (!valid || saving) return;
+    setSaving(true);
+
+    // Payment is a demo, but the lead is not. Someone who fills in a name and an
+    // address on a page that openly says "no payment taken" is the most qualified
+    // email this site will produce, so record it under its own Source before the
+    // cart is cleared. A capture failure must never block the confirmation.
+    try {
+      await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.email.trim(),
+          source: "checkout",
+          attribution: readAttribution(),
+        }),
+      });
+    } catch {
+      /* ignore - the buyer still gets their confirmation */
+    }
+
+    track("preorder_intent", { items: String(count), value: String(total) });
+
+    setSaving(false);
     setDone(true);
     clear();
   };
@@ -56,8 +81,8 @@ export default function Checkout() {
               <label className="co-label">Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></label>
               <label className="co-label">Shipping address <span className="opt-cur" style={{ textTransform: "none" }}>(optional)</span><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></label>
 
-              <button className="btn btn-primary" type="submit" disabled={!valid} style={{ height: 54, justifyContent: "center", marginTop: 8 }}>
-                Place pre-order · ${total}
+              <button className="btn btn-primary" type="submit" disabled={!valid || saving} style={{ height: 54, justifyContent: "center", marginTop: 8 }}>
+                {saving ? "Reserving…" : `Place pre-order · $${total}`}
               </button>
               <p className="fine">No payment taken now. This is a demo checkout.</p>
             </form>

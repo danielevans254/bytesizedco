@@ -1,6 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import ProductArt from "./shop/ProductArt";
+import { captureAttribution, readAttribution, track } from "./attribution";
 
 /* ---- brand mark ---- */
 function Mark({ className }) {
@@ -46,6 +47,24 @@ const FEED = [
 
 const INTERESTS = ["Carry", "Wear", "Play", "Read", "Sound", "Cars", "Outdoors", "Fitness"];
 
+// Fixed Drop 001 deadline so the countdown is real, not a per-load timer.
+// Set NEXT_PUBLIC_DROP_DEADLINE (ISO 8601) to switch the countdown on.
+// There is deliberately no fallback date: an unset or elapsed deadline hides the
+// strip entirely rather than rendering 00:00:00:00. A countdown that isn't
+// counting down is fake urgency, which the brand rules out.
+const DROP_DEADLINE = Date.parse(process.env.NEXT_PUBLIC_DROP_DEADLINE || "");
+const HAS_DEADLINE = Number.isFinite(DROP_DEADLINE);
+
+// Social handles are not registered yet (launch-checklist: "Register matching
+// social handles"). Render a link only once its env var is set, so the footer
+// never ships dead href="#" links.
+const SOCIALS = [
+  ["IG", process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM],
+  ["TikTok", process.env.NEXT_PUBLIC_SOCIAL_TIKTOK],
+  ["X", process.env.NEXT_PUBLIC_SOCIAL_X],
+].filter(([, href]) => Boolean(href));
+
+
 const FAQ = [
   ["What exactly is Byte Sized Co.?", "A curated marketplace for modern utility. We find the genuinely useful things across the worlds we live in (tech, fashion, cars, music, outdoors, fitness) and release them as small, numbered drops."],
   ["What's the “physical + digital” thing?", "Every drop pairs a physical object with a digital companion: a wallpaper set, a template, a program, access. The object you own outright. The companion keeps evolving, and it can't be switched off."],
@@ -54,9 +73,24 @@ const FAQ = [
   ["When does Drop 001 land?", "Soon. We're finishing the first pairing now. Join the list and you'll be first to know, before it's public."],
 ];
 
+// FAQ rich-result markup, built from the same array the section renders so the two
+// can never drift apart. "<" is escaped so an answer can never close the tag early.
+const FAQ_JSONLD = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map(([q, a]) => ({
+    "@type": "Question",
+    name: q,
+    acceptedAnswer: { "@type": "Answer", text: a },
+  })),
+}).replace(/</g, "\\u003c");
+
 export default function Page() {
   useEffect(() => {
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Record the traffic source before anything can navigate away from it.
+    captureAttribution();
 
     // ---- BOOT intro ----
     const boot = document.getElementById("boot");
@@ -168,6 +202,7 @@ export default function Page() {
     const cnt = document.getElementById("count");
     let liveTotal = 0;
     let countTimer;
+    const counter = document.querySelector(".proof .counter");
     fetch("/api/waitlist")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -175,12 +210,18 @@ export default function Page() {
           liveTotal = d.total;
           if (cnt && cnt.dataset.counted) cnt.textContent = liveTotal.toLocaleString();
         }
+        // Honest social proof: only show the counter once there's a real number.
+        // "0 on the list" is anti-proof, so the counter stays hidden until then.
+        if (counter) counter.style.display = liveTotal > 0 ? "" : "none";
       })
       .catch(() => {});
     const proof = document.querySelector(".proof");
     const cio = new IntersectionObserver((es) => es.forEach((e) => {
       if (e.isIntersecting && cnt) {
         cnt.dataset.counted = "1";
+        // No real number yet: let the fetch handler fill it in (and reveal the
+        // counter) rather than animating to 0.
+        if (liveTotal <= 0) { cio.disconnect(); return; }
         if (reduce) { cnt.textContent = liveTotal.toLocaleString(); cio.disconnect(); return; }
         let n = 0, st = Math.max(1, Math.ceil(liveTotal / 64));
         countTimer = setInterval(() => { n += st; if (n >= liveTotal) { n = liveTotal; clearInterval(countTimer); } cnt.textContent = n.toLocaleString(); }, 20);
@@ -189,13 +230,22 @@ export default function Page() {
     }), { threshold: 0.5 });
     if (proof) cio.observe(proof);
 
-    // ---- countdown ----
-    const end = Date.now() + (14 * 24 * 3600 - 5 * 3600 - 23 * 60) * 1000;
-    const cd = document.getElementById("countdown");
+    // ---- countdown (fixed launch deadline, not a per-load timer) ----
+    // The strip only renders when NEXT_PUBLIC_DROP_DEADLINE is set, but the
+    // deadline can still elapse while a tab sits open. Hide the section rather
+    // than let it park at 00:00:00:00.
+    const end = DROP_DEADLINE;
+    const cd = HAS_DEADLINE ? document.getElementById("countdown") : null;
+    const dropStrip = document.getElementById("drop");
     let cdTimer;
     const tickCd = () => {
       if (!cd) return;
-      let s = Math.max(0, Math.floor((end - Date.now()) / 1000));
+      let s = Math.floor((end - Date.now()) / 1000);
+      if (s <= 0) {
+        if (dropStrip) dropStrip.style.display = "none";
+        clearInterval(cdTimer);
+        return;
+      }
       const d = Math.floor(s / 86400); s -= d * 86400;
       const h = Math.floor(s / 3600); s -= h * 3600;
       const m = Math.floor(s / 60); s -= m * 60;
@@ -206,7 +256,7 @@ export default function Page() {
       cd.querySelector("[data-s]").textContent = pad(s);
     };
     tickCd();
-    if (!reduce) cdTimer = setInterval(tickCd, 1000);
+    if (!reduce && cd) cdTimer = setInterval(tickCd, 1000);
 
     return () => {
       bootTimers.forEach(clearTimeout);
@@ -233,19 +283,26 @@ export default function Page() {
     const scope = form.closest("#join") || document;
     const interests = Array.from(scope.querySelectorAll(".chip.on")).map((c) => c.textContent.trim());
 
+    const attribution = readAttribution();
+
     btn.disabled = true;
     btn.textContent = "Joining…";
     try {
       const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, website: honey ? honey.value : "", interests }),
+        body: JSON.stringify({ email, website: honey ? honey.value : "", interests, attribution }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.ok) {
-        btn.textContent = data.number
-          ? (data.alreadyJoined ? "✓ Already in · #" : "✓ You're #") + data.number
-          : "✓ You're on the list";
+        // The conversion Gate 1 is measured on: targeted sessions -> waitlist submits.
+        track("waitlist_submit", {
+          source: attribution.utm_source || "direct",
+          returning: data.alreadyJoined ? "yes" : "no",
+        });
+        btn.textContent = data.alreadyJoined
+          ? (data.number ? "✓ Already in · #" + data.number : "✓ You're already in")
+          : (data.number ? "✓ You're #" + data.number : "✓ You're on the list");
         btn.style.background = "var(--accent-dim)";
         input.value = "";
         input.placeholder = "See you at Drop 001.";
@@ -288,7 +345,7 @@ export default function Page() {
             <a className="link" href="#how">How it works</a>
             <a className="link" href="#pillars">Departments</a>
             <a className="link" href="/shop">Shop</a>
-            <a className="link" href="#drop">Drop 001</a>
+            {HAS_DEADLINE && <a className="link" href="#drop">Drop 001</a>}
             <a className="btn btn-primary" href="#join" style={{ height: 40, padding: "0 18px" }} data-l="Join waitlist">Join waitlist</a>
           </div>
         </div>
@@ -337,17 +394,19 @@ export default function Page() {
         </section>
       </header>
 
-      <section id="drop" className="countdown-strip">
-        <div className="wrap reveal">
-          <span className="kicker">// DROP 001 LANDS IN</span>
-          <div className="countdown" id="countdown">
-            <div className="cd"><div className="num" data-d>00</div><div className="lbl">Days</div></div>
-            <div className="cd"><div className="num" data-h>00</div><div className="lbl">Hrs</div></div>
-            <div className="cd"><div className="num" data-m>00</div><div className="lbl">Min</div></div>
-            <div className="cd"><div className="num" data-s>00</div><div className="lbl">Sec</div></div>
+      {HAS_DEADLINE && (
+        <section id="drop" className="countdown-strip">
+          <div className="wrap reveal">
+            <span className="kicker">// DROP 001 LANDS IN</span>
+            <div className="countdown" id="countdown">
+              <div className="cd"><div className="num" data-d>00</div><div className="lbl">Days</div></div>
+              <div className="cd"><div className="num" data-h>00</div><div className="lbl">Hrs</div></div>
+              <div className="cd"><div className="num" data-m>00</div><div className="lbl">Min</div></div>
+              <div className="cd"><div className="num" data-s>00</div><div className="lbl">Sec</div></div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section id="manifesto">
         <div className="wrap">
@@ -494,7 +553,7 @@ export default function Page() {
       <section className="proof">
         <div className="wrap reveal">
           <span className="kicker">// JOINED</span>
-          <div className="counter"><span id="count">0</span><span className="accent"> on the list</span></div>
+          <div className="counter" style={{ display: "none" }}><span id="count">0</span><span className="accent"> on the list</span></div>
           <div className="ticker-strip" style={{ justifyContent: "center", marginTop: 24 }}>
             <span><i className="dot" /> Systems nominal</span><span>· Waitlist open</span><span>· Founding spots: 500</span>
           </div>
@@ -502,6 +561,7 @@ export default function Page() {
       </section>
 
       <section id="faq">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: FAQ_JSONLD }} />
         <div className="wrap reveal">
           <div className="label"><span className="kicker dim">07 / QUESTIONS</span></div>
           <h2>The short version.</h2>
@@ -561,7 +621,13 @@ export default function Page() {
           </div>
           <div className="foot-inner">
             <a className="brand" href="#top"><Mark className="logo-mark" /> Byte&nbsp;Sized&nbsp;Co.</a>
-            <div className="foot-links"><a href="#manifesto">About</a><a href="#join">Contact</a><a href="#">IG</a><a href="#">TikTok</a><a href="#">X</a></div>
+            <div className="foot-links">
+              <a href="#manifesto">About</a>
+              <a href="#join">Contact</a>
+              {SOCIALS.map(([label, href]) => (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer">{label}</a>
+              ))}
+            </div>
           </div>
           <div className="foot-status"><i className="dot" /> SYSTEMS NOMINAL · WAITLIST OPEN · DROP 001 LOADING</div>
           <div className="copy">© 2026 Byte Sized Co. · Your world, simplified.</div>
