@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Verify the sending-domain DNS for Byte Sized Co.
  *
- *   node scripts/check-email-dns.mjs            # defaults to bytesized.co
+ *   node scripts/check-email-dns.mjs            # defaults to bytesizedco.com
  *   node scripts/check-email-dns.mjs other.co
  *
  * Checks the subdomain split described in EMAIL-SETUP.md:
@@ -23,7 +23,7 @@ const resolver = new Resolver();
 // local cache. Propagation lag is the usual reason a record "isn't there yet".
 resolver.setServers(["1.1.1.1", "8.8.8.8"]);
 
-const DEFAULT_DOMAIN = "bytesized.co";
+const DEFAULT_DOMAIN = "bytesizedco.com";
 const domain = (process.argv[2] || DEFAULT_DOMAIN)
   .trim()
   .replace(/^https?:\/\//, "")

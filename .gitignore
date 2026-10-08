@@ -7,3 +7,7 @@
 *.pem
 npm-debug.log*
 .env*
+.gstack/
+
+.vercel
+.env*

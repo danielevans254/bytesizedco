@@ -2,6 +2,8 @@
    dependencies. Shared by the waitlist form and the pre-order form so there is one
    code path to the sending platform, not two that drift. */
 
+import { SITE_URL } from "../site";
+
 const API_KEY = process.env.BEEHIIV_API_KEY;
 const PUB_ID = process.env.BEEHIIV_PUBLICATION_ID; // e.g. "pub_xxxxxxxx"
 
@@ -63,7 +65,10 @@ export async function beehiivSubscribe(email, { interests = "", attribution = {}
       utm_campaign: attribution.utm_campaign || DEFAULT_UTM.campaign,
       ...(attribution.utm_term ? { utm_term: attribution.utm_term } : {}),
       ...(attribution.utm_content ? { utm_content: attribution.utm_content } : {}),
-      referring_site: attribution.referrer || "bytesized.co",
+      // Falls back to our own origin for a direct visit. Derived from SITE_URL
+      // rather than hardcoded: this used to read "bytesized.co", a domain we do
+      // not own, so every direct signup was tagged with someone else's site.
+      referring_site: attribution.referrer || SITE_URL,
       custom_fields,
     }),
   });

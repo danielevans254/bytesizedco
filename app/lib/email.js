@@ -7,6 +7,12 @@
    Hand-rolled fetch against the REST endpoint rather than the SDK, to keep the app
    at three dependencies. Best-effort: a mail failure must never cost a signup. */
 
+import { SITE_URL } from "../site";
+
+// Bare host for display in copy. Derived from SITE_URL so the domain cannot
+// drift: this footer used to name "bytesized.co", which we do not own.
+const SITE_HOST = SITE_URL.replace(/^https?:\/\//, "");
+
 const KEY = process.env.RESEND_API_KEY;
 const FROM = process.env.EMAIL_FROM; // e.g. "Byte Sized Co. <hello@yourdomain.co>"
 const REPLY_TO = process.env.EMAIL_REPLY_TO;
@@ -64,7 +70,7 @@ function footerHtml() {
     : "";
   return `<div style="border-top:1px solid ${LINE};margin-top:28px;padding-top:18px">
     <div style="color:${MUTED};font-size:12px;line-height:1.6">
-      You are receiving this because you reserved a spot on bytesized.co.
+      You are receiving this because you reserved a spot on ${SITE_HOST}.
       This is a transactional message about that reservation, not marketing.
     </div>${addr}
   </div>`;

@@ -10,7 +10,7 @@ import {
   cleanAttribution,
   sourceLabel,
 } from "../../lib/beehiiv";
-import { recordSignup } from "../../lib/store";
+import { recordSignup, storeOn } from "../../lib/store";
 import { clientIp, rateLimited } from "../../lib/ratelimit";
 
 export const runtime = "nodejs";
@@ -40,9 +40,23 @@ async function readStore() {
     return { entries: [] };
   }
 }
+/* Reports failure instead of throwing. This fallback is a dev convenience, but it
+   also runs in production whenever the Beehiiv env vars are absent, and on Vercel
+   everything outside /tmp is read-only. An uncaught EROFS here 500s the request and
+   takes the whole waitlist down, which is exactly what happened on 2026-10-08. */
 async function writeStore(store) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(FILE, JSON.stringify(store, null, 2));
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    await fs.writeFile(FILE, JSON.stringify(store, null, 2));
+    return true;
+  } catch (e) {
+    console.error(
+      "[waitlist] cannot persist signup: Beehiiv is not configured and the filesystem is read-only. " +
+        "Set BEEHIIV_API_KEY and BEEHIIV_PUBLICATION_ID in this environment.",
+      String(e?.message || e)
+    );
+    return false;
+  }
 }
 
 /* ============================================================
@@ -144,7 +158,16 @@ export async function POST(req) {
       createdAt: new Date().toISOString(),
       ip,
     });
-    await writeStore(store);
+    const persisted = await writeStore(store);
+    // Nothing captured the signup: no Beehiiv, no Supabase, no writable disk.
+    // Answering ok:true here would drop the lead silently, which is worse than
+    // asking the visitor to retry. Only claim success if something stored it.
+    if (!persisted && !storeOn) {
+      return NextResponse.json(
+        { ok: false, error: "Could not save your signup just now. Please try again shortly." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ ok: true, number, total: BASE + store.entries.length });
   });
 }

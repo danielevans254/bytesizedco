@@ -23,11 +23,19 @@ signal, fix before any paid traffic. P1 = needed before prod. P2 = quality.
       response; UI says "You're already in". Kept `reactivate_existing:false` so
       unsubscribers aren't silently resurrected. **Verify against a real duplicate
       signup** — the match is heuristic on Beehiiv's error shape. (`route.js`)
-- [ ] **Rate limit + file store silently no-op on serverless** (in-memory `Map`,
-      local FS). The real Beehiiv endpoint is effectively unthrottled in prod.
-      Move throttling/persistence to a shared store (Upstash/Vercel KV). (Stale-IP
-      eviction added as a stopgap, but cross-process throttling still needs KV.)
-      (`route.js:89-96`)
+- [x] **File store did NOT silently no-op on serverless, it 500'd the waitlist.**
+      This entry previously said "silently no-op", which is why it sat unprioritised.
+      Actual behaviour: with the Beehiiv vars absent, POST fell through to the local
+      file store, which calls `fs.mkdir(process.cwd()/data)`. Everything outside
+      `/tmp` is read-only on Vercel, so it threw EROFS uncaught and returned a 500
+      with an empty body for every valid email. Live from the 2026-08-19 deploy until
+      2026-10-08. `writeStore` now reports failure instead of throwing, and the route
+      answers a handled 503 rather than claiming success it cannot deliver. Guard
+      against recurrence: `npm run check:waitlist`. (`route.js:43-58`, `route.js:138-148`)
+- [ ] **Rate limit still no-ops across serverless instances** (in-memory `Map`).
+      The real Beehiiv endpoint is effectively unthrottled in prod. Move throttling
+      to a shared store (Upstash/Vercel KV). (Stale-IP eviction added as a stopgap,
+      but cross-process throttling still needs KV.) (`ratelimit.js`)
 - [ ] **`join()` mutates the DOM imperatively** (`btn.textContent`, `btn.style`,
       `input.placeholder`). Convert to React state (status / number / error).
       (`page.js:225-267`)

@@ -8,10 +8,10 @@ Next.js 14 (App Router) pre-launch / waitlist landing page.
 npm install
 npm run dev        # http://localhost:3000
 npm run build      # production build, run before considering work done
-npm run check:dns  # verify email DNS for bytesized.co
+npm run check:dns  # verify email DNS for bytesizedco.com
 ```
 
-Domain: **bytesized.co** (DNS on AWS Route 53). Email setup, including the
+Domain: **bytesizedco.com** (DNS on Vercel nameservers ns1/ns2.vercel-dns.com). Email setup, including the
 `mail.` / `send.` sending split, is in **[EMAIL-SETUP.md](./EMAIL-SETUP.md)**.
 
 ## Waitlist → Beehiiv
@@ -41,7 +41,7 @@ preview builds don't pollute production analytics or emit production URLs.
 
 | Variable | Effect |
 |---|---|
-| `NEXT_PUBLIC_SITE_URL` | Canonical origin for metadata, sitemap, robots and JSON-LD. Defaults to `https://bytesized.co`. |
+| `NEXT_PUBLIC_SITE_URL` | Canonical origin for metadata, sitemap, robots and JSON-LD. Defaults to `https://bytesizedco.com`. |
 | `NEXT_PUBLIC_PLAUSIBLE_SRC` | Plausible script URL from your site settings (e.g. `https://plausible.io/js/pa-XXXXX.js`). Nothing loads without it. |
 | `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` | Only needed for the older `data-domain` script variant. |
 | `NEXT_PUBLIC_DROP_DEADLINE` | ISO 8601 drop deadline. The countdown strip and its nav link render only when this is set and still in the future. |

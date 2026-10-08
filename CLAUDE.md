@@ -78,4 +78,4 @@ In QA mode, flag any code that does not match `DESIGN.md`.
 
 ## Secrets
 
-`.env.local` holds live Beehiiv credentials and is gitignored. Never commit it or echo its values.
+`.env.local` holds live Beehiiv, Supabase service-role and Resend credentials and is gitignored. Never commit it or echo its values. `SUPABASE_SERVICE_ROLE_KEY` bypasses RLS: server-only, never prefixed `NEXT_PUBLIC_`, never read from a client component.
