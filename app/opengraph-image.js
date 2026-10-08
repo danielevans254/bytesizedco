@@ -20,7 +20,7 @@ export default function OG() {
           padding: 80,
           background: "#08090B",
           backgroundImage:
-            "radial-gradient(circle at 85% 0%, rgba(84,230,255,0.14), transparent 55%), radial-gradient(circle at 0% 100%, rgba(107,255,168,0.16), transparent 55%)",
+            "radial-gradient(circle at 85% 0%, rgba(107,255,168,0.10), transparent 55%), radial-gradient(circle at 0% 100%, rgba(107,255,168,0.16), transparent 55%)",
           color: "#F4F6F9",
           fontFamily: "sans-serif",
           position: "relative",
@@ -88,7 +88,7 @@ export default function OG() {
         {/* bottom row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", fontSize: 26, color: "#B9BFC9", maxWidth: 760 }}>
-            The marketplace for modern utility. Physical + digital, in one.
+            Small, considered things. Digital, physical, or both.
           </div>
           <div style={{ display: "flex", alignItems: "center", fontSize: 20, color: "#646B77", letterSpacing: 2 }}>
             <div style={{ width: 10, height: 10, borderRadius: 5, background: accent, marginRight: 12 }} />

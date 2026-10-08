@@ -262,7 +262,12 @@ const RAW = [
   },
 ];
 
-export const PRODUCTS = RAW.map((p) => ({ ...p, price: p.base, tiers: tiers(p.base) }));
+export const PRODUCTS = RAW.map((p) => ({
+  ...p,
+  format: p.format || "hybrid",
+  price: p.base,
+  tiers: p.tiers || tiers(p.base),
+}));
 
 export function getProduct(slug) {
   return PRODUCTS.find((p) => p.slug === slug) || null;

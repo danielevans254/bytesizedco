@@ -1,7 +1,13 @@
 "use client";
 import { useMemo } from "react";
 import { useCart } from "./cart";
-import { availability } from "./config";
+import { availability, productFormat } from "./config";
+
+const TRUST_BY_FORMAT = {
+  digital: ["Digital product you keep", "Delivery details confirmed before purchase", "Pre-order. Cancel anytime before the drop closes"],
+  physical: ["Numbered, limited edition", "Physical product you own", "Pre-order. Cancel anytime before the drop closes"],
+  hybrid: ["Numbered, limited edition", "Physical object + digital companion", "Pre-order. Cancel anytime before the drop closes"],
+};
 
 export function initSel(options) {
   const s = {};
@@ -16,6 +22,7 @@ export function initSel(options) {
 export default function ProductConfigurator({ product, sel, setSel, tierKey, setTierKey, qty, setQty }) {
   const { add } = useCart();
   const options = product.options || [];
+  const format = productFormat(product);
   const tier = product.tiers.find((t) => t.key === tierKey) || product.tiers[0];
   const set = (id, v) => setSel((p) => ({ ...p, [id]: v }));
 
@@ -46,6 +53,7 @@ export default function ProductConfigurator({ product, sel, setSel, tierKey, set
     add({
       id: `${product.slug}:${tier.key}:${vid}`,
       slug: product.slug, name: product.name, art: product.art,
+      format,
       tierLabel: tier.label, rc: tier.rc, gem: tier.gem,
       variant: summary, price: unit, qty,
     });
@@ -158,9 +166,7 @@ export default function ProductConfigurator({ product, sel, setSel, tierKey, set
       </div>
 
       <ul className="trust">
-        <li>Numbered, limited edition</li>
-        <li>Physical object + digital companion</li>
-        <li>Pre-order. Cancel anytime before the drop closes</li>
+        {(product.trust || TRUST_BY_FORMAT[format]).map((item) => <li key={item}>{item}</li>)}
       </ul>
     </div>
   );

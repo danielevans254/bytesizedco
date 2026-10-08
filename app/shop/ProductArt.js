@@ -95,7 +95,7 @@ function Physical({ variant, color }) {
 }
 
 function Companion() {
-  const C = "var(--accent-2)";
+  const C = "var(--accent)";
   return (
     <>
       <rect x="140" y="118" width="320" height="204" rx="12" stroke={C} strokeWidth="2" fill={SUR} />

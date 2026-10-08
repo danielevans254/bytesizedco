@@ -8,10 +8,12 @@ export default function Checkout() {
   const { items, subtotal, setQty, remove, clear, count, FREE_SHIP } = useCart();
   const [done, setDone] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", address: "" });
+  const [emailed, setEmailed] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", address: "", website: "" });
 
   const valid = form.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
-  const shipping = subtotal === 0 || subtotal >= FREE_SHIP ? 0 : 6;
+  const needsShipping = items.some((item) => item.format !== "digital");
+  const shipping = !needsShipping || subtotal === 0 || subtotal >= FREE_SHIP ? 0 : 6;
   const total = subtotal + shipping;
 
   const place = async (e) => {
@@ -21,24 +23,38 @@ export default function Checkout() {
 
     // Payment is a demo, but the lead is not. Someone who fills in a name and an
     // address on a page that openly says "no payment taken" is the most qualified
-    // email this site will produce, so record it under its own Source before the
-    // cart is cleared. A capture failure must never block the confirmation.
+    // email this site will produce, so record the reservation before the cart is
+    // cleared. A capture failure must never block the confirmation.
+    let sent = false;
     try {
-      await fetch("/api/waitlist", {
+      const res = await fetch("/api/preorder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          name: form.name.trim(),
           email: form.email.trim(),
-          source: "checkout",
+          address: form.address.trim(),
+          website: form.website,
           attribution: readAttribution(),
+          items: items.map((it) => ({
+            slug: it.slug,
+            name: it.name,
+            tierLabel: it.tierLabel,
+            variant: it.variant,
+            qty: it.qty,
+            price: it.price,
+          })),
         }),
       });
+      const data = await res.json().catch(() => ({}));
+      sent = Boolean(data.emailed);
     } catch {
-      /* ignore - the buyer still gets their confirmation */
+      /* ignore - the buyer still gets their confirmation screen */
     }
 
     track("preorder_intent", { items: String(count), value: String(total) });
 
+    setEmailed(sent);
     setSaving(false);
     setDone(true);
     clear();
@@ -51,7 +67,7 @@ export default function Checkout() {
           <span className="kicker">// ORDER CONFIRMED</span>
           <h1 style={{ marginTop: 14 }}>You&apos;re reserved.</h1>
           <p className="lead" style={{ marginTop: 14 }}>
-            Thanks, {form.name.split(" ")[0] || "friend"}. We&apos;ll email {form.email} when each drop ships. Your physical items and their digital companions land together.
+            Thanks, {form.name.split(" ")[0] || "friend"}. {emailed ? `A confirmation is on its way to ${form.email}.` : `We'll email ${form.email} with the delivery details for each item.`}
           </p>
           <a className="btn btn-primary" href="/shop" style={{ marginTop: 26 }}>Back to the shop →</a>
         </div>
@@ -79,7 +95,8 @@ export default function Checkout() {
 
               <label className="co-label">Name<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
               <label className="co-label">Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></label>
-              <label className="co-label">Shipping address <span className="opt-cur" style={{ textTransform: "none" }}>(optional)</span><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></label>
+              {needsShipping && <label className="co-label">Shipping address <span className="opt-cur u-text-normal">(optional)</span><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></label>}
+              <input type="text" name="website" className="hp" tabIndex={-1} autoComplete="off" aria-hidden="true" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} />
 
               <button className="btn btn-primary" type="submit" disabled={!valid || saving} style={{ height: 54, justifyContent: "center", marginTop: 8 }}>
                 {saving ? "Reserving…" : `Place pre-order · $${total}`}
@@ -92,7 +109,7 @@ export default function Checkout() {
               <div className="co-lines">
                 {items.map((it) => (
                   <div className="cart-item" key={it.id}>
-                    <div className="ci-art"><ProductArt variant={it.art} /></div>
+                    <div className="ci-art"><ProductArt variant={it.art} companion={it.format === "digital"} /></div>
                     <div className="ci-info">
                       <div className="ci-top"><a href={`/shop/${it.slug}`}><h4>{it.name}</h4></a><button className="ci-x" onClick={() => remove(it.id)}>Remove</button></div>
                       <div className={"rar " + it.rc}><span className="gem">{it.gem}</span> {it.tierLabel}</div>

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useCart } from "./cart";
 import { PRODUCTS } from "./products";
 import ProductArt from "./ProductArt";
+import { buildDefaultCartItem } from "./config";
 
 export default function CartDrawer() {
   const { items, open, setOpen, setQty, remove, add, subtotal, count, FREE_SHIP } = useCart();
@@ -23,28 +24,25 @@ export default function CartDrawer() {
     return () => clearTimeout(t);
   }, [lastRemoved]);
 
-  const remaining = Math.max(0, FREE_SHIP - subtotal);
-  const pct = Math.min(100, FREE_SHIP ? (subtotal / FREE_SHIP) * 100 : 0);
+  const shippableSubtotal = items
+    .filter((item) => item.format !== "digital")
+    .reduce((sum, item) => sum + item.price * item.qty, 0);
+  const remaining = Math.max(0, FREE_SHIP - shippableSubtotal);
+  const pct = Math.min(100, FREE_SHIP ? (shippableSubtotal / FREE_SHIP) * 100 : 0);
 
   const removeItem = (it) => { remove(it.id); setLastRemoved(it); };
   const undo = () => { if (lastRemoved) { add(lastRemoved); setLastRemoved(null); } };
 
-  // one-click add of a product's standard default variant (for upsell)
+  // one-click add of a product's shared default variant (for upsell)
   const addStandard = (p) => {
-    if ((p.options || []).some((o) => o.required)) { location.href = `/shop/${p.slug}`; return; }
-    const t = p.tiers.find((x) => x.key === "standard");
-    let delta = 0; const parts = [];
-    const vid = (p.options || []).map((o) => {
-      if (o.type === "text" || o.type === "toggle") return `${o.id}=${o.type === "toggle" ? false : ""}`;
-      const v = o.values[0]; if (v) { delta += v.priceDelta || 0; parts.push(v.label); }
-      return `${o.id}=${v?.id ?? ""}`;
-    }).join("&");
-    add({ id: `${p.slug}:standard:${vid}`, slug: p.slug, name: p.name, art: p.art, tierLabel: "Standard", rc: "standard", gem: "◆", variant: parts.join(" · "), price: t.price + delta, qty: 1 });
+    const item = buildDefaultCartItem(p);
+    if (!item) { location.href = `/shop/${p.slug}`; return; }
+    add(item);
   };
 
   const inCart = new Set(items.map((i) => i.slug));
   const upsell = subtotal > 0 && remaining > 0
-    ? PRODUCTS.filter((p) => !inCart.has(p.slug) && !(p.options || []).some((o) => o.required))
+    ? PRODUCTS.filter((p) => !inCart.has(p.slug) && buildDefaultCartItem(p))
         .sort((a, b) => a.base - b.base).slice(0, 2)
     : [];
 
@@ -66,15 +64,15 @@ export default function CartDrawer() {
           </div>
         ) : (
           <>
-            <div className="ship-bar">
+            {shippableSubtotal > 0 && <div className="ship-bar">
               <div className="ship-text">{remaining > 0 ? `Add $${remaining} for free shipping` : "✓ Free shipping unlocked"}</div>
               <div className="ship-track"><div className="ship-fill" style={{ width: pct + "%" }} /></div>
-            </div>
+            </div>}
 
             <div className="cart-items">
               {items.map((it) => (
                 <div className="cart-item" key={it.id}>
-                  <div className="ci-art"><ProductArt variant={it.art} /></div>
+                  <div className="ci-art"><ProductArt variant={it.art} companion={it.format === "digital"} /></div>
                   <div className="ci-info">
                     <div className="ci-top">
                       <a href={`/shop/${it.slug}`} onClick={() => setOpen(false)}><h4>{it.name}</h4></a>
@@ -117,10 +115,10 @@ export default function CartDrawer() {
 
             <div className="cart-foot">
               <div className="cart-sub"><span>Subtotal</span><span>${subtotal}</span></div>
-              <a className="btn btn-primary" style={{ width: "100%", height: 54, justifyContent: "center", fontSize: 15 }} href="/shop/checkout" onClick={() => setOpen(false)}>
+              <a className="btn btn-primary btn-block cart-checkout" href="/shop/checkout" onClick={() => setOpen(false)}>
                 Checkout · ${subtotal}
               </a>
-              <p className="fine" style={{ textAlign: "center" }}>Pre-order. Ships when each drop closes.</p>
+              <p className="fine cart-fine">Pre-order. Delivery is confirmed before each drop closes.</p>
             </div>
           </>
         )}

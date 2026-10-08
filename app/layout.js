@@ -1,7 +1,9 @@
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import { SITE_URL } from "./site";
+import "./design-system/tokens.css";
 import "./globals.css";
+import "./design-system/primitives.css";
 
 /* ---- analytics ----
    Plausible: cookieless and privacy-friendly, so there is no consent banner to
@@ -39,11 +41,11 @@ export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: "Byte Sized Co. · Your world, simplified.",
   description:
-    "The marketplace for modern utility, connecting the physical and digital elements of your busy life.",
+    "Small, considered things across every part of modern life. Digital, physical, or both.",
   openGraph: {
     title: "Byte Sized Co. · Your world, simplified.",
     description:
-      "The marketplace for modern utility, connecting the physical and digital elements of your busy life.",
+      "Small, considered things across every part of modern life. Digital, physical, or both.",
     type: "website",
   },
 };

@@ -1,8 +1,8 @@
 "use client";
 import { useRecentlyViewed } from "./recent";
 import { PRODUCTS } from "./products";
-import ProductArt from "./ProductArt";
-import { floorPrice } from "./config";
+import ProductCard from "./ProductCard";
+import SectionLabel from "../ui/SectionLabel";
 
 export default function RecentlyViewed({ exclude }) {
   const slugs = useRecentlyViewed(exclude);
@@ -11,19 +11,9 @@ export default function RecentlyViewed({ exclude }) {
 
   return (
     <section className="related">
-      <div className="label"><span className="kicker dim">YOU WERE LOOKING AT</span></div>
+      <SectionLabel>YOU WERE LOOKING AT</SectionLabel>
       <div className="shop-grid">
-        {items.map((p) => (
-          <a className="pcard" key={p.slug} href={`/shop/${p.slug}`}>
-            <div className="thumb"><ProductArt variant={p.art} /></div>
-            <div className="pbody">
-              <span className="dept">{p.deptTag}</span>
-              <h3>{p.name}</h3>
-              <p>{p.tagline}</p>
-              <div className="prow"><span className="pp">Physical + Digital</span><span className="price-sm">from ${floorPrice(p)}</span></div>
-            </div>
-          </a>
-        ))}
+        {items.map((p) => <ProductCard key={p.slug} product={p} />)}
       </div>
     </section>
   );

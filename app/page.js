@@ -2,27 +2,18 @@
 import { useEffect } from "react";
 import ProductArt from "./shop/ProductArt";
 import { captureAttribution, readAttribution, track } from "./attribution";
-
-/* ---- brand mark ---- */
-function Mark({ className }) {
-  return (
-    <svg className={className} viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="7" fill="var(--accent)" />
-      <path d="M9 8 H7 V24 H9" fill="none" stroke="var(--accent-ink)" strokeWidth="2" strokeLinecap="square" />
-      <path d="M23 8 H25 V24 H23" fill="none" stroke="var(--accent-ink)" strokeWidth="2" strokeLinecap="square" />
-      <rect x="13" y="13" width="6" height="6" rx="1" fill="var(--accent-ink)" />
-    </svg>
-  );
-}
+import Brand from "./ui/Brand";
+import ProductFormatBadge from "./ui/ProductFormatBadge";
+import SectionLabel from "./ui/SectionLabel";
 
 const PILLARS = [
-  ["// CARRY", "Carry & Everyday", "EDC, desk objects, the small useful things.", "Physical + Digital", ""],
-  ["// WEAR", "Wear", "Apparel basics with a point of view.", "Physical + Digital", ""],
-  ["// PLAY", "Play", "Card games, stickers, crafts, kits.", "Physical + Digital", ""],
-  ["// READ", "Read & Feed", "Books, zines, the newsletter, the feed.", "Physical + Digital", ""],
-  ["// SOUND", "Sound & Drive", "Music and cars, the lifestyle thread.", "Physical + Digital", ""],
-  ["// OUT", "Out", "Outdoor & activity gear.", "Physical + Digital", ""],
-  ["// MOVE", "Move & Fuel", "Fitness, nutrition, recovery, healthy living.", "Physical + Digital", "feat"],
+  ["// CARRY", "Carry & Everyday", "EDC, desk objects, the small useful things.", "Physical · Digital · Paired", ""],
+  ["// WEAR", "Wear", "Apparel basics with a point of view.", "Physical · Digital · Paired", ""],
+  ["// PLAY", "Play", "Card games, stickers, crafts, kits.", "Physical · Digital · Paired", ""],
+  ["// READ", "Read & Feed", "Books, zines, the newsletter, the feed.", "Physical · Digital · Paired", ""],
+  ["// SOUND", "Sound & Drive", "Music and cars, the lifestyle thread.", "Physical · Digital · Paired", ""],
+  ["// OUT", "Out", "Outdoor & activity gear.", "Physical · Digital · Paired", ""],
+  ["// MOVE", "Move & Fuel", "Fitness, nutrition, recovery, healthy living.", "Physical · Digital · Paired", "feat"],
   ["// _", "Whatever's next", "The catalog grows with the curation.", "Coming soon", ""],
 ];
 
@@ -36,7 +27,7 @@ const STATS = [
   ["7", "worlds", false],
   ["500", "units / drop", false],
   ["500", "founding spots", true],
-  ["∞", "digital", true],
+  ["3", "product formats", true],
 ];
 
 const FEED = [
@@ -66,11 +57,11 @@ const SOCIALS = [
 
 
 const FAQ = [
-  ["What exactly is Byte Sized Co.?", "A curated marketplace for modern utility. We find the genuinely useful things across the worlds we live in (tech, fashion, cars, music, outdoors, fitness) and release them as small, numbered drops."],
-  ["What's the “physical + digital” thing?", "Every drop pairs a physical object with a digital companion: a wallpaper set, a template, a program, access. The object you own outright. The companion keeps evolving, and it can't be switched off."],
-  ["Are these NFTs or crypto?", "No, definitely not. There's no blockchain, no token, no wallet, nothing to mint or trade. Byte Sized editions are ordinary collectibles: a physical item you own plus a digital companion you keep. Every purchase gives you both, so you grow a physical collection and a digital one together. The cards just mark founding supporters of the store."],
+  ["What exactly is Byte Sized Co.?", "A generalist company for small, considered things across the worlds we live in. A release might be useful, expressive, interesting, or simply cool to own. The category can change. The standard does not."],
+  ["What formats can a product take?", "Whatever best fits the idea: digital-only, physical-only, or a physical and digital pairing. Pairing is an option, not a requirement."],
+  ["Are these NFTs or crypto?", "No, definitely not. There's no blockchain, token, wallet, minting, or trading. Paired editions are ordinary collectibles: a physical item you own plus a digital companion you keep. The cards mark founding supporters of the store."],
   ["What does the waitlist get me?", "Founding members get guaranteed early access to Drop 001, a permanent low member number, and founding-member pricing. The first 500 only."],
-  ["When does Drop 001 land?", "Soon. We're finishing the first pairing now. Join the list and you'll be first to know, before it's public."],
+  ["When does Drop 001 land?", "Soon. We're finishing the first release now. Join the list and you'll be first to know, before it's public."],
 ];
 
 // FAQ rich-result markup, built from the same array the section renders so the two
@@ -103,7 +94,7 @@ export default function Page() {
         const lines = [
           ["> initializing curator", "ok"],
           ["> mounting seven worlds", "ok"],
-          ["> pairing physical + digital", "ok"],
+          ["> loading three formats", "ok"],
           ["> rendering Drop 001", "ok"],
           ["> waitlist", "OPEN"],
         ];
@@ -149,7 +140,7 @@ export default function Page() {
     }
 
     // ---- typewriter ----
-    const phrases = ["small things, done right", "physical + digital, paired", "numbered. limited. yours.", "the good stuff, found for you"];
+    const phrases = ["small things, done right", "digital. physical. or both.", "numbered. limited. yours.", "the good stuff, found for you"];
     const el = document.getElementById("type");
     let typeTimer;
     if (el) {
@@ -339,14 +330,14 @@ export default function Page() {
 
       <nav id="nav">
         <div className="wrap nav-inner">
-          <a className="brand" href="#top"><Mark className="logo-mark" /> Byte&nbsp;Sized&nbsp;Co.</a>
+          <Brand href="#top" />
           <div className="nav-links">
             <a className="link" href="#manifesto">Manifesto</a>
             <a className="link" href="#how">How it works</a>
             <a className="link" href="#pillars">Departments</a>
             <a className="link" href="/shop">Shop</a>
             {HAS_DEADLINE && <a className="link" href="#drop">Drop 001</a>}
-            <a className="btn btn-primary" href="#join" style={{ height: 40, padding: "0 18px" }} data-l="Join waitlist">Join waitlist</a>
+            <a className="btn btn-primary btn-sm" href="#join" data-l="Join waitlist">Join waitlist</a>
           </div>
         </div>
       </nav>
@@ -360,8 +351,8 @@ export default function Page() {
                 <span className="kicker">// PRE-LAUNCH · WAITLIST OPEN</span>
                 <h1>Your world,<br /><span className="stroke">simplified.</span></h1>
                 <div className="type-line"><span id="type" /><span className="caret" /></div>
-                <p className="lead">The marketplace for modern utility, connecting the physical and digital elements of your busy life.</p>
-                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <p className="lead">Small, considered things across every part of modern life. Digital, physical, or both.</p>
+                <div className="bsc-cluster">
                   <a className="btn btn-primary" href="#join" data-l="Join the waitlist →">Join the waitlist →</a>
                   <a className="btn btn-ghost" href="#how">How it works</a>
                 </div>
@@ -374,7 +365,7 @@ export default function Page() {
               <div className="artifact reveal d2">
                 <div className="card r-founder holo" id="tcard">
                   <span className="corner c1" /><span className="corner c2" />
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div className="bsc-split">
                     <div className="top">Byte&nbsp;Sized&nbsp;Co.<br />Certificate&nbsp;of&nbsp;Edition</div>
                     <div className="seal">B</div>
                   </div>
@@ -383,7 +374,7 @@ export default function Page() {
                     <div className="no">No.&nbsp;007<span>/050</span></div>
                     <div className="hash">DROP::OCTET · 0x9F3A·C21E</div>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                  <div className="bsc-split bsc-split-end">
                     <div className="meta">Physical&nbsp;+&nbsp;Digital</div>
                     <div className="meta">Tap&nbsp;to&nbsp;unlock&nbsp;→</div>
                   </div>
@@ -412,16 +403,16 @@ export default function Page() {
         <div className="wrap">
           <div className="manifesto-grid">
             <div className="reveal">
-              <div className="label"><span className="kicker dim">01 / WHAT WE BELIEVE</span></div>
-              <h2>Curation is the product.<br />Taste is the feature.</h2>
-              <p className="lead" style={{ marginTop: 22, color: "var(--muted)" }}>A generalist&apos;s marketplace, tied together by one point of view. Not a category, a curator.</p>
+              <SectionLabel index="01">WHAT WE BELIEVE</SectionLabel>
+              <h2>Range is the point.<br />Taste gives it a spine.</h2>
+              <p className="lead u-mt-5 u-text-muted">One company for many interests, tied together by a clear standard. Byte Sized is the principle, not the category.</p>
             </div>
             <div className="reveal d1">
               <div className="rows">
                 <div className="m-row"><span className="n">01</span><span>Everything you&apos;re into deserves better than scattered tabs and noise.</span></div>
-                <div className="m-row"><span className="n">02</span><span>Useful beats trendy. <em>Always.</em></span></div>
-                <div className="m-row"><span className="n">03</span><span>The best things live in two worlds: <em>physical and digital.</em></span></div>
-                <div className="m-row"><span className="n">04</span><span>Small things, done right. Numbered, limited, <em>worth owning.</em></span></div>
+                <div className="m-row"><span className="n">02</span><span>Considered beats disposable. <em>Always.</em></span></div>
+                <div className="m-row"><span className="n">03</span><span>The format follows the idea: <em>digital, physical, or both.</em></span></div>
+                <div className="m-row"><span className="n">04</span><span>Small things, done right. Easy to try, <em>worth keeping.</em></span></div>
               </div>
             </div>
           </div>
@@ -430,48 +421,55 @@ export default function Page() {
 
       <section id="how">
         <div className="wrap reveal">
-          <div className="label"><span className="kicker dim">02 / HOW IT WORKS</span></div>
+          <SectionLabel index="02">HOW IT WORKS</SectionLabel>
           <h2>Three steps, on repeat.</h2>
           <div className="steps">
             <div className="step"><span className="ghost">01</span><span className="sn">// SUBSCRIBE</span><h3>Join the feed</h3><p>A free weekly read. The good stuff, found for you. No noise, no selling. Just taste.</p></div>
             <div className="step"><span className="ghost">02</span><span className="sn">// SENSE</span><h3>We read the room</h3><p>What you click and love tells us what to make, so we only ever build what you actually want.</p></div>
-            <div className="step"><span className="ghost">03</span><span className="sn">// DROP</span><h3>The drop lands</h3><p>A numbered, limited object + its digital companion. You get first access. It sells out. Repeat.</p></div>
+            <div className="step"><span className="ghost">03</span><span className="sn">// DROP</span><h3>The drop lands</h3><p>A focused physical, digital, or paired release. You get first access. It sells out. Repeat.</p></div>
           </div>
         </div>
       </section>
 
       <section id="signature">
         <div className="wrap reveal">
-          <div className="label"><span className="kicker">03 / THE SIGNATURE</span></div>
-          <h2>One thing, two worlds.</h2>
-          <p className="lead" style={{ marginTop: 16 }}>Every drop pairs a physical object with a digital companion that keeps evolving. The object you own. The companion grows, and can&apos;t be switched off.</p>
+          <SectionLabel index="03" accent>THE FORMATS</SectionLabel>
+          <h2>The idea chooses the format.</h2>
+          <p className="lead u-mt-4">Some ideas belong on a screen. Some belong in your hands. Some become better when both parts work together.</p>
           <div className="sig">
             <div className="sig-card">
-              <div className="sig-art phys"><ProductArt variant="play" /></div>
-              <span className="tag">Physical</span><h3>A numbered sticker pack</h3>
-              <p>Die-cut, matte, limited to 500, with an edition number on the card.</p>
+              <div className="sig-art digi"><ProductArt variant="read" companion /></div>
+              <ProductFormatBadge format="digital" />
+              <h3>Complete on a screen</h3>
+              <p>Guides, templates, newsletters, artwork, tools, and other things made to download or access.</p>
             </div>
-            <div className="sig-join">+</div>
             <div className="sig-card">
-              <div className="sig-art digi"><ProductArt variant="play" companion /></div>
-              <span className="tag">Digital</span><h3>An evolving wallpaper set</h3>
-              <p>Unlocked by the card&apos;s code. New drops add to the same space you own.</p>
+              <div className="sig-art phys"><ProductArt variant="wear" /></div>
+              <ProductFormatBadge format="physical" />
+              <h3>Complete in your hands</h3>
+              <p>Apparel, games, printed goods, tools, and objects that need no digital layer to earn their place.</p>
+            </div>
+            <div className="sig-card">
+              <div className="sig-art pair"><ProductArt variant="play" /></div>
+              <ProductFormatBadge format="hybrid" />
+              <h3>Better as a pair</h3>
+              <p>A physical object and digital companion, combined only when each part makes the other more valuable.</p>
             </div>
           </div>
-          <p className="sig-eq">Physical <b>+</b> Digital <b>=</b> one thing</p>
+          <p className="sig-eq">Digital <b>·</b> Physical <b>·</b> Physical + Digital</p>
         </div>
       </section>
 
       <section id="editions">
         <div className="wrap reveal">
-          <div className="label"><span className="kicker dim">04 / THE EDITIONS</span></div>
+          <SectionLabel index="04">THE EDITIONS</SectionLabel>
           <h2>Not all editions are equal.</h2>
-          <p className="lead" style={{ marginTop: 16 }}>Every drop is split into rarity tiers. The lowest numbers are Founder editions: holographic foil, gold seal, the real collectible. The rarer the card, the rarer the digital companion it unlocks.</p>
+          <p className="lead u-mt-4">Collectible releases can use rarity tiers in any format. The lowest numbers are Founder editions, with the most distinctive treatment or bonus content.</p>
           <div className="editions">
             {EDITIONS.map((e, i) => (
               <div className={"card flat " + e.cls} key={i}>
                 <span className="corner c1" /><span className="corner c2" />
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div className="bsc-split">
                   <div className="top">Byte&nbsp;Sized&nbsp;Co.<br />Certificate&nbsp;of&nbsp;Edition</div>
                   <div className="seal">B</div>
                 </div>
@@ -480,7 +478,7 @@ export default function Page() {
                   <div className="no">No.&nbsp;{e.no}<span>/{e.of}</span></div>
                   <div className="hash">DROP::OCTET · {e.hash}</div>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                <div className="bsc-split bsc-split-end">
                   <div className="meta">Physical&nbsp;+&nbsp;Digital</div>
                   <div className="meta">{e.note}</div>
                 </div>
@@ -491,16 +489,16 @@ export default function Page() {
             <span><i className="g f" />Founder&nbsp;<b>001–050</b></span>
             <span><i className="g r" />Rare&nbsp;<b>051–150</b></span>
             <span><i className="g s" />Standard&nbsp;<b>151–500</b></span>
-            <span style={{ color: "var(--accent)" }}>↳ lower number, rarer card</span>
+            <span className="u-text-accent">↳ lower number, rarer card</span>
           </div>
         </div>
       </section>
 
       <section id="pillars">
         <div className="wrap reveal">
-          <div className="label"><span className="kicker dim">05 / THE SEVEN WORLDS</span></div>
+          <SectionLabel index="05">THE SEVEN WORLDS</SectionLabel>
           <h2>Everything, with a spine.</h2>
-          <p className="lead" style={{ marginTop: 16 }}>Seven departments, one point of view. Each one a physical + digital pairing.</p>
+          <p className="lead u-mt-4">Seven departments, one point of view. Each can hold digital products, physical goods, or a signature pairing.</p>
           <div className="grid7">
             {PILLARS.map(([dept, h, p, pd, feat]) => (
               <div className={"pillar " + feat} key={dept}>
@@ -516,7 +514,7 @@ export default function Page() {
               <div className="stat" key={k}><div className={"v" + (a ? " accent" : "")}>{v}</div><div className="k">{k}</div></div>
             ))}
           </div>
-          <div style={{ marginTop: 28 }}>
+          <div className="u-mt-7">
             <a className="btn btn-ghost" href="/shop">Preview the shop →</a>
           </div>
         </div>
@@ -533,10 +531,10 @@ export default function Page() {
         <div className="wrap reveal">
           <div className="feed-grid">
             <div>
-              <div className="label"><span className="kicker dim">06 / THE FEED</span></div>
+              <SectionLabel index="06">THE FEED</SectionLabel>
               <h2>The feed is the heart.</h2>
-              <p className="lead" style={{ marginTop: 16 }}>It starts free. A weekly read of six things worth your attention, across every world. Read it, and the drops you actually want write themselves.</p>
-              <a className="btn btn-primary" href="#join" data-l="Subscribe free →" style={{ marginTop: 28 }}>Subscribe free →</a>
+              <p className="lead u-mt-4">It starts free. A weekly read of six things worth your attention, across every world. Read it, and the drops you actually want write themselves.</p>
+              <a className="btn btn-primary u-mt-7" href="#join" data-l="Subscribe free →">Subscribe free →</a>
             </div>
             <div className="issue">
               <div className="issue-head"><span>// THE FEED · ISSUE 001</span><span className="live"><i className="dot" />LIVE</span></div>
@@ -563,7 +561,7 @@ export default function Page() {
       <section id="faq">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: FAQ_JSONLD }} />
         <div className="wrap reveal">
-          <div className="label"><span className="kicker dim">07 / QUESTIONS</span></div>
+          <SectionLabel index="07">QUESTIONS</SectionLabel>
           <h2>The short version.</h2>
           <div className="faq">
             {FAQ.map(([q, a], i) => (
@@ -581,15 +579,15 @@ export default function Page() {
           <div className="closer-grid">
             <div>
               <span className="kicker">// GET IN EARLY</span>
-              <h2 style={{ marginTop: 16 }}>Claim your founding number.</h2>
-              <p className="lead" style={{ marginTop: 16 }}>The first 500 lock in founding-member pricing on Drop 001, and a member number that&apos;s yours forever.</p>
-              <div className="chips-label">What are you into? <span style={{ textTransform: "none", letterSpacing: 0 }}>(optional, tunes your feed)</span></div>
+              <h2 className="u-mt-4">Claim your founding number.</h2>
+              <p className="lead u-mt-4">The first 500 lock in founding-member pricing on Drop 001, and a member number that&apos;s yours forever.</p>
+              <div className="chips-label">What are you into? <span className="u-text-normal">(optional, tunes your feed)</span></div>
               <div className="chips">
                 {INTERESTS.map((label) => (
                   <button type="button" key={label} className="chip" onClick={toggleChip}>{label}</button>
                 ))}
               </div>
-              <form className="field" onSubmit={join} style={{ marginTop: 20 }}>
+              <form className="field u-mt-5" onSubmit={join}>
                 <input type="email" placeholder="you@email.com" aria-label="Email" required />
                 <input type="text" name="website" className="hp" tabIndex={-1} autoComplete="off" aria-hidden="true" />
                 <button className="btn btn-primary" type="submit" data-l="Get in early →">Get in early →</button>
@@ -598,7 +596,7 @@ export default function Page() {
             </div>
             <div className="pass">
               <span className="corner c1" /><span className="corner c2" />
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div className="bsc-split">
                 <div className="ph">Byte&nbsp;Sized&nbsp;Co.<br />Founding&nbsp;Member</div>
                 <div className="seal">B</div>
               </div>
@@ -606,7 +604,7 @@ export default function Page() {
               <div className="pmeta">Private Reserve · Lifetime rate</div>
               <div className="prow">
                 <div className="ph">Early&nbsp;access · Every&nbsp;drop</div>
-                <div className="ph" style={{ color: "var(--accent)" }}>ACTIVE</div>
+                <div className="ph u-text-accent">ACTIVE</div>
               </div>
             </div>
           </div>
@@ -616,11 +614,11 @@ export default function Page() {
       <footer>
         <div className="wrap">
           <div className="foot-cta">
-            <p className="foot-slogan"><b>Your world, simplified.</b> Byte Sized Co. is the marketplace for modern utility, connecting the physical and digital elements of your busy life.</p>
+            <p className="foot-slogan"><b>Your world, simplified.</b> Small, considered things across every part of modern life. Digital, physical, or both.</p>
             <a className="btn btn-primary" href="#join" data-l="Join the waitlist →">Join the waitlist →</a>
           </div>
           <div className="foot-inner">
-            <a className="brand" href="#top"><Mark className="logo-mark" /> Byte&nbsp;Sized&nbsp;Co.</a>
+            <Brand href="#top" />
             <div className="foot-links">
               <a href="#manifesto">About</a>
               <a href="#join">Contact</a>

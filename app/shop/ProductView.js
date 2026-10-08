@@ -3,11 +3,14 @@ import { useEffect, useMemo, useState } from "react";
 import ProductArt from "./ProductArt";
 import ProductConfigurator, { initSel } from "./ProductConfigurator";
 import { recordRecent } from "./recent";
+import ProductFormatBadge from "../ui/ProductFormatBadge";
+import { productFormat } from "./config";
 
 export default function ProductView({ product }) {
   const [sel, setSel] = useState(() => initSel(product.options));
   const [tierKey, setTierKey] = useState("standard");
   const [qty, setQty] = useState(1);
+  const format = productFormat(product);
 
   useEffect(() => { recordRecent(product.slug); }, [product.slug]);
 
@@ -24,15 +27,15 @@ export default function ProductView({ product }) {
     <div className="product">
       <div className="p-media">
         <div className="p-art art-fade" key={color || "base"}>
-          <ProductArt variant={product.art} color={color} />
+          <ProductArt variant={product.art} color={color} companion={format === "digital"} />
         </div>
-        <div className="companion">
+        {format === "hybrid" && product.digital && <div className="companion">
           <div className="companion-head">
-            <span className="kicker" style={{ color: "var(--accent-2)" }}>// THE COMPANION</span>
-            <span className="pp">Digital</span>
+            <span className="kicker">// THE COMPANION</span>
+            <ProductFormatBadge format="digital" />
           </div>
           <div className="p-art small"><ProductArt variant={product.art} companion /></div>
-        </div>
+        </div>}
       </div>
 
       <div className="p-info">
@@ -42,6 +45,7 @@ export default function ProductView({ product }) {
         <div className="price-row">
           <span className="price">from ${product.price}</span>
           <span className="badge" style={{ marginLeft: 14 }}>{product.drop} · Numbered</span>
+          <ProductFormatBadge product={product} />
         </div>
 
         <div className="quickfacts">
@@ -55,15 +59,19 @@ export default function ProductView({ product }) {
           qty={qty} setQty={setQty}
         />
 
-        <div className="pairing">
-          <div className="pair"><span className="pair-tag">Physical</span><h4>{product.physical.title}</h4><p>{product.physical.desc}</p></div>
-          <div className="pair-plus">+</div>
-          <div className="pair">
-            <span className="pair-tag digi">Digital</span><h4>{product.digital.title}</h4><p>{product.digital.desc}</p>
-            {tier?.digiPerk && (
-              <p className="digi-perk"><span className="gem">{tier.gem}</span> {tier.label} unlock: {tier.digiPerk}</p>
-            )}
-          </div>
+        <div className={`pairing${format === "hybrid" ? "" : " single"}`}>
+          {product.physical && (
+            <div className="pair"><span className="pair-tag">Physical</span><h4>{product.physical.title}</h4><p>{product.physical.desc}</p></div>
+          )}
+          {format === "hybrid" && product.physical && product.digital && <div className="pair-plus">+</div>}
+          {product.digital && (
+            <div className="pair">
+              <span className="pair-tag digi">Digital</span><h4>{product.digital.title}</h4><p>{product.digital.desc}</p>
+              {tier?.digiPerk && (
+                <p className="digi-perk"><span className="gem">{tier.gem}</span> {tier.label} unlock: {tier.digiPerk}</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

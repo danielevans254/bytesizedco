@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import ProductArt from "./ProductArt";
-import QuickAdd from "./QuickAdd";
+import ProductCard from "./ProductCard";
 import { floorPrice } from "./config";
 
 const DEPTS = ["Carry & Everyday", "Wear", "Play", "Read & Feed", "Sound & Drive", "Out", "Move & Fuel"];
@@ -61,17 +60,7 @@ export default function ShopBrowser({ products }) {
         </div>
       ) : (
         <div className="shop-grid">
-          {list.map((p) => (
-            <a className="pcard" key={p.slug} href={`/shop/${p.slug}`}>
-              <div className="thumb"><ProductArt variant={p.art} /><QuickAdd product={p} /></div>
-              <div className="pbody">
-                <span className="dept">{p.deptTag}</span>
-                <h3>{p.name}</h3>
-                <p>{p.tagline}</p>
-                <div className="prow"><span className="pp">Physical + Digital</span><span className="price-sm">from ${floorPrice(p)}</span></div>
-              </div>
-            </a>
-          ))}
+          {list.map((p) => <ProductCard key={p.slug} product={p} quickAdd />)}
         </div>
       )}
     </>
