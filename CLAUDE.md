@@ -9,8 +9,12 @@ curated-commerce brand. This is a **prototype** — no real payments. The only l
 waitlist and preorder routes, each env-gated (Beehiiv list, optional Supabase copy, optional Resend
 mail). The strategy/brainstorm knowledge base lives in a separate Obsidian vault at
 `../bytesizeco` (markdown only; not part of this app). This directory is its own git repo
-(remote `danielevans254/bytesizedco`, branch `main`), nested inside the untracked workspace at `..`;
-the workspace-level `../CLAUDE.md` describes the surrounding folders.
+(branch `main`; remote `danielevans254/bytesizedco`, moving to `bytesizedco/bytesizedco`), nested inside the
+untracked workspace at `..`; the workspace-level `../CLAUDE.md` describes the surrounding folders.
+
+Deploys go to Vercel team `byte-sized-co`, project `bytesizedco` (`.vercel/project.json`, `vercel.json`).
+The workspace skill `/deploy-web` and `../.claude/memory/vercel-project.md` hold the account rules,
+including the Hobby-plan author check that blocks deployments authored by `danielevans254`.
 
 ## Commands
 
@@ -19,7 +23,8 @@ npm run dev      # http://localhost:3000 (App Router dev server)
 npm run build    # production build — run this to verify before considering work done
 npm run start    # serve the production build
 npm run lint     # next lint
-npm run check:dns  # SPF / MX / DMARC for mail. and send. subdomains (see EMAIL-SETUP.md)
+npm run check:dns  # MX, SPF, DKIM, DMARC for bytesizedco.com plus mail. and send. subdomains (see EMAIL-SETUP.md)
+npm run check:waitlist   # read-only probe of production /api/waitlist (pass a URL to target another host)
 ```
 
 Plain **JavaScript, not TypeScript**. Import alias `@/*` maps to repo root (`jsconfig.json`).
@@ -52,8 +57,9 @@ a product you edit data, not JSX.
 ### API routes and server helpers (`app/api/`, `app/lib/`)
 - **Three dependencies, by design.** `package.json` lists only `next`, `react`, `react-dom`. Beehiiv, Supabase (PostgREST) and Resend are called with hand-rolled `fetch` in `app/lib/`. Don't add an SDK for them.
 - **Every helper is env-gated and best-effort.** `beehiiv.js` (`beehiivOn`), `store.js` (`storeOn`), `email.js` (`emailOn`) and `ratelimit.js` skip silently when their env vars are missing and never throw. A provider outage costs a row, never a signup. The env var reference is in `README.md`; DNS and email wiring is in `EMAIL-SETUP.md`.
+- `app/site.js` — exports `SITE_URL`, the one place the public origin is defined. Derive display hosts and referrers from it. The company owns only `bytesizedco.com`; `bytesized.co` is someone else's domain and must not appear anywhere.
 - `app/attribution.js` — captures UTMs + referrer first-touch into `sessionStorage` (key `bsc-attr`) and exposes `track()` for Plausible events (`waitlist_submit`, `preorder_intent`). Both forms send `attribution` with the request; the routes sanitise it and forward it as Beehiiv `utm_*` params.
-- `app/api/waitlist/route.js` — `POST {email, interests?, source?, attribution?, website?}` subscribes to Beehiiv and writes the own-copy row to Supabase. `number` is `null` by design (Beehiiv has no per-subscriber position; never render a personal "#N"). `GET` returns the live `active_subscriptions` count; `BASE` is `0`, so the counter stays hidden until there is a real subscriber. **No Beehiiv keys → falls back to `data/waitlist.json`** so the form works in dev. Don't rely on that fallback in production (serverless has no persistent FS).
+- `app/api/waitlist/route.js` — `POST {email, interests?, source?, attribution?, website?}` subscribes to Beehiiv and writes the own-copy row to Supabase. `number` is `null` by design (Beehiiv has no per-subscriber position; never render a personal "#N"). `GET` returns the live `active_subscriptions` count; `BASE` is `0`, so the counter stays hidden until there is a real subscriber. **No Beehiiv keys → falls back to `data/waitlist.json`** so the form works in dev. In production that fallback cannot persist anything (read-only FS): it logs and loses the signup. If `GET` reports `source: "local"` on a deployed host, the Beehiiv env vars are missing from Vercel (the 2026-10-08 outage).
 - `app/api/preorder/route.js` — backs the demo checkout. Writes the reservation to Supabase, subscribes the buyer tagged `Pre-order Intent`, and emails a confirmation via Resend. Totals are **recomputed server-side** from the line items, but unit prices are still trusted from the request. That is only acceptable while checkout takes no payment; before Stripe, look prices up from `products.js` by slug + tier.
 - `source` is a key (`landing` | `checkout`) mapped to a label by `sourceLabel()` in `beehiiv.js`, so a client can never write an arbitrary value into a subscriber record.
 - Both routes have email validation, a honeypot (`website` field) and a per-IP rate limit (6/min). The limit is an in-memory `Map`, so it **no-ops on serverless**; move it to Upstash/Vercel KV before real traffic. Open items live in `AUDIT-FIXES.md`.

@@ -5,15 +5,17 @@
  *   node scripts/check-email-dns.mjs other.co
  *
  * Checks the subdomain split described in EMAIL-SETUP.md:
+ *   <domain>         Google Workspace inbox (MX, SPF, DKIM at google._domainkey)
  *   mail.<domain>  Beehiiv newsletter
  *   send.<domain>  Resend transactional
  *   _dmarc.<domain>  DMARC policy at the root
  *
  * No dependencies: Node's built-in resolver only. Read-only, safe to re-run.
  *
- * DKIM is not checked. Selectors are generated per provider and per publication,
- * so there is no name to look up without your dashboard in front of you. Verify
- * DKIM in the Beehiiv and Resend UIs instead.
+ * Beehiiv and Resend DKIM is not checked. Their selectors are generated per
+ * publication, so there is no name to look up without your dashboard in front of
+ * you. Google Workspace DKIM uses the fixed selector google._domainkey, so that
+ * one is checked.
  */
 
 import { Resolver } from "node:dns/promises";
@@ -77,6 +79,26 @@ async function checkOwnership() {
   }
 }
 
+async function checkRootSender() {
+  console.log(`
+-- Google Workspace: ${domain}`);
+  const records = await txt(domain);
+  const spf = records.find((r) => r.toLowerCase().startsWith("v=spf1"));
+  if (spf && /include:_spf.google.com/.test(spf)) {
+    line(PASS, "root SPF authorises Google", spf);
+  } else if (spf) {
+    line(WARN, "root SPF present but does not include Google", spf);
+  } else {
+    line(FAIL, "root SPF missing", 'Add TXT: "v=spf1 include:_spf.google.com ~all"');
+  }
+  const dkim = await txt(`google._domainkey.${domain}`);
+  if (dkim.some((r) => r.toLowerCase().startsWith("v=dkim1"))) {
+    line(PASS, "Google DKIM record present (google._domainkey)");
+  } else {
+    line(FAIL, "Google DKIM record missing", "Admin console, Gmail, Authenticate email: copy the google._domainkey TXT value into DNS.");
+  }
+}
+
 async function checkDmarc() {
   const records = await txt(`_dmarc.${domain}`);
   const dmarc = records.find((r) => r.toLowerCase().startsWith("v=dmarc1"));
@@ -122,6 +144,7 @@ async function checkSender(label, host, { expectMx }) {
 }
 
 await checkOwnership();
+await checkRootSender();
 await checkDmarc();
 await checkSender("Beehiiv newsletter", `mail.${domain}`, { expectMx: false });
 await checkSender("Resend transactional", `send.${domain}`, { expectMx: true });

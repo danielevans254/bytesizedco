@@ -1,8 +1,9 @@
 # Email and own-the-list setup
 
-Domain: **bytesized.co**. DNS is hosted on **AWS Route 53** (nameservers
-`ns-798.awsdns-35.net` and three siblings), so every record below goes in the
-Route 53 hosted zone for `bytesized.co`.
+Domain: **bytesizedco.com**. It is the only domain the company owns (bytesized.co
+belongs to someone else). DNS is hosted on **Vercel DNS** (nameservers
+`ns1.vercel-dns.com` and `ns2.vercel-dns.com`), so every record below goes in the
+Vercel dashboard under Domains, bytesizedco.com, DNS Records.
 
 Four independent pieces. Each stays completely dormant until its environment
 variables are set, so you can turn them on one at a time.
@@ -13,9 +14,9 @@ variables are set, so you can turn them on one at a time.
 
 | Purpose | Host | Status as of setup |
 |---|---|---|
-| Receiving mail (your inbox) | `bytesized.co` | **no MX, nothing can reach you** |
-| Beehiiv newsletter | `mail.bytesized.co` | not configured |
-| Resend transactional | `send.bytesized.co` | not configured |
+| Receiving mail (your inbox) | `bytesizedco.com` | **Google Workspace, MX not yet in DNS** |
+| Beehiiv newsletter | `mail.bytesizedco.com` | not configured |
+| Resend transactional | `send.bytesizedco.com` | not configured |
 
 Bulk sending reputation is scoped to the sending domain. If the newsletter ever
 collects spam complaints, that damage stays on `mail.` and never touches your
@@ -44,48 +45,68 @@ Beehiiv and Resend UIs.
 
 ## 1. First: an inbox you can actually receive at
 
-`bytesized.co` currently has **zero MX records**. Sending is only half of it. If
-`hello@bytesized.co` cannot receive, then every reply to a newsletter issue, every
-customer question, and every supplier response goes nowhere.
+The inbox is **Google Workspace** (Business Starter, Flexible plan). Primary domain
+`bytesizedco.com`, one paid user `daniel.evans@bytesizedco.com`, 2-Step Verification
+enforced. Every other address is a free Google Group that delivers to that inbox:
 
-Do this before anything else. Options, cheapest first:
-
-| Option | Cost | Notes |
+| Group | Aliases | Purpose |
 |---|---|---|
-| **ImprovMX / Forward Email** | free tier | Forwards `hello@bytesized.co` to your personal Gmail. Fastest path. Forwarding only, so replies come *from* your personal address unless you also configure SMTP send-as. |
-| **Zoho Mail** | free for 1 user | A real mailbox on your domain. Genuine inbox, dated UI. |
-| **Google Workspace** | about $6/user/mo | A real mailbox, send-as works properly, and you already know the interface. |
+| `hello@` | hi@, info@, contact@, team@ | Public front door. Newsletter reply-to. Collaborative Inbox. |
+| `support@` | help@, orders@ | Customer service. Reply-to for transactional mail. Collaborative Inbox. |
+| `billing@` | receipts@ | Vendor receipts and invoices. |
+| `alerts@` | ops@ | Deploy, payment, uptime and security alerts. |
+| `dmarc@` | | DMARC aggregate reports (the `rua=` target below). |
+| `abuse@`, `postmaster@` | | Reserved by Google. Exist as groups so copies reach you. |
 
-Whichever you pick, it gives you MX records for the **root** `bytesized.co`. Add
-them in Route 53, then confirm:
+Every group accepts mail from outside the organization, shows conversations to
+members only, and posts suspicious mail instead of holding it in a moderation queue.
+
+Until the MX record below exists, none of these addresses can receive anything:
+
+```
+Name:  bytesizedco.com   (root, "@" in Vercel)
+Type:  MX
+Value: smtp.google.com
+Priority: 1
+```
+
+Root SPF, Google only. Beehiiv and Resend live on subdomains and must not be added here:
+
+```
+Name:  bytesizedco.com
+Type:  TXT
+Value: v=spf1 include:_spf.google.com ~all
+```
+
+DKIM: Admin console, Apps, Google Workspace, Gmail, Authenticate email. Copy the
+`google._domainkey` TXT value shown there into Vercel DNS, wait for it to resolve,
+then press **Start authentication**.
+
+Then confirm:
 
 ```bash
 node scripts/check-email-dns.mjs
 ```
 
-Aim for at least `hello@bytesized.co`. Add `dmarc@bytesized.co` too, since the
-DMARC record below points reports there.
-
 ---
 
 ## 2. DMARC at the root
 
-Standard record, safe to use exactly as written. Add to the `bytesized.co` hosted
-zone:
+Standard record, safe to use exactly as written. Add in Vercel DNS:
 
 ```
-Name:  _dmarc.bytesized.co
+Name:  _dmarc.bytesizedco.com
 Type:  TXT
 TTL:   300
-Value: "v=DMARC1; p=none; rua=mailto:dmarc@bytesized.co"
+Value: "v=DMARC1; p=none; rua=mailto:dmarc@bytesizedco.com"
 ```
 
 Leave it at `p=none` for a few weeks and actually read the aggregate reports
 before tightening to `p=quarantine`. Jumping straight to a strict policy is how
 people silently blackhole their own mail.
 
-`p=none` with no `rua=` teaches you nothing, so make sure `dmarc@bytesized.co`
-resolves to an inbox from step 1.
+`p=none` with no `rua=` teaches you nothing. `dmarc@bytesizedco.com` is a Google Group
+from step 1, so the reports land in your inbox.
 
 ---
 
@@ -94,15 +115,15 @@ resolves to an inbox from step 1.
 No code changes. Dashboard plus DNS.
 
 1. In Beehiiv, open your publication settings and find the custom sending domain
-   section. Add `mail.bytesized.co`.
+   section. Add `mail.bytesizedco.com`.
 2. Beehiiv generates DNS records specific to your publication: typically a DKIM
    record, an SPF record, and a return-path CNAME. **Copy them from your
    dashboard, not from any guide including this one.** DKIM keys are unique per
    publication.
-3. Add them to the Route 53 hosted zone.
+3. Add them in Vercel DNS.
 4. Hit verify in Beehiiv.
 5. Set the from-name and from-address to something a human would reply to. Point
-   replies at `hello@bytesized.co`.
+   replies at `hello@bytesizedco.com`.
 
 ---
 
@@ -111,20 +132,21 @@ No code changes. Dashboard plus DNS.
 This sends the pre-order reservation confirmation. Beehiiv still owns the
 newsletter and the waitlist welcome, so nothing here duplicates it.
 
-1. Create a Resend account and add the domain `send.bytesized.co`.
-2. Resend shows MX, SPF and DKIM records. Add them in Route 53. Verify.
+1. Create a Resend account and add the domain `send.bytesizedco.com`.
+2. Resend shows MX, SPF and DKIM records. Add them in Vercel DNS. Verify.
 3. Create an API key.
 4. Set:
 
 ```
 RESEND_API_KEY=re_xxxxxxxx
-EMAIL_FROM=Byte Sized Co. <hello@send.bytesized.co>
-EMAIL_REPLY_TO=hello@bytesized.co
+EMAIL_FROM=Byte Sized Co. <hello@send.bytesizedco.com>
+EMAIL_REPLY_TO=support@bytesizedco.com
 COMPANY_POSTAL_ADDRESS=Byte Sized Co., 1 Example St, City, ST 00000
 ```
 
 `EMAIL_FROM` must use the verified `send.` subdomain or Resend rejects the send.
-`EMAIL_REPLY_TO` uses the **root** domain so replies land in the inbox from step 1.
+`EMAIL_REPLY_TO` uses the **root** domain so replies land in the `support@` group from
+step 1, since every reply to a reservation email is a support question.
 
 `COMPANY_POSTAL_ADDRESS` is optional but recommended. A transactional message is
 exempt from CAN-SPAM's unsubscribe requirement, but a real postal address is the
@@ -182,7 +204,7 @@ The split is deliberate. Nothing fires twice for one action.
 
 ## Order to do this in
 
-1. Inbox on the root domain, so you can receive at all.
+1. MX, SPF and DKIM for the root domain in Vercel DNS, so the Workspace inbox can receive.
 2. DMARC at `p=none`.
 3. Beehiiv sending domain, because the newsletter is the actual business right now.
 4. Supabase, so you stop being a single provider away from losing the list.
