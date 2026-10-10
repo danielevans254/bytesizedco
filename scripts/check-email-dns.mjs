@@ -187,7 +187,7 @@ async function checkResendDkim() {
 }
 
 await checkBeehiiv();
-await checkSender("Resend transactional", `send.${domain}`, { expectMx: true });
+await checkSender("Resend return path", `send.${domain}`, { expectMx: true });
 await checkResendDkim();
 
 console.log(

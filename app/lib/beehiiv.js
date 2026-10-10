@@ -10,7 +10,7 @@ const PUB_ID = process.env.BEEHIIV_PUBLICATION_ID; // e.g. "pub_xxxxxxxx"
 export const beehiivOn = Boolean(API_KEY && PUB_ID);
 
 // optional behaviour overrides
-const WELCOME_EMAIL = process.env.BEEHIIV_WELCOME_EMAIL !== "false"; // default true
+const WELCOME_EMAIL = process.env.BEEHIIV_WELCOME_EMAIL === "true"; // default off: Resend sends the signup confirmation (see email.js)
 const DOUBLE_OPT = process.env.BEEHIIV_DOUBLE_OPT || "off"; // "on" | "off" | "not_set"
 const COHORT = process.env.BEEHIIV_COHORT || "Founding Member";
 

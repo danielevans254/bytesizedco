@@ -1,8 +1,9 @@
 /* Transactional email via Resend, sent from your own domain.
 
-   Scope: email that Beehiiv does NOT already send. Beehiiv owns the newsletter and
-   the waitlist welcome (send_welcome_email), so nothing here fires on a landing
-   signup, or a visitor would get two emails for one action.
+   Scope: every system email. Beehiiv carries only the newsletter and the
+   product-catalog verticals; signup confirmations, billing and order updates,
+   account notices, alerts, fraud and support mail all go through here, so a landing
+   signup sends exactly one message and it comes from Resend, not Beehiiv.
 
    Hand-rolled fetch against the REST endpoint rather than the SDK, to keep the app
    at three dependencies. Best-effort: a mail failure must never cost a signup. */
@@ -194,6 +195,23 @@ function notice({ subject, label, heading, paras = [], rows = [], cta, after = [
     .trim();
 
   return { subject, html, text, replyTo };
+}
+
+/* Waitlist signup confirmation. One message per new subscriber, sent by the
+   waitlist route right after Beehiiv accepts the address. Beehiiv's own welcome
+   email stays off (BEEHIIV_WELCOME_EMAIL) so nobody gets two. Replies go to support@. */
+export function waitlistWelcomeEmail() {
+  return notice({
+    subject: "You're on the list",
+    label: "// ON THE LIST",
+    heading: "You're in.",
+    paras: [
+      "Thanks for joining the Byte Sized Co. list. Every drop is numbered and capped, and the list hears about each one before anyone else.",
+      "There is nothing to do right now. Newsletter issues and product news arrive separately; this message only confirms your spot.",
+    ],
+    after: ["Questions? Reply to this email and a person answers."],
+    note: `You are receiving this because you joined the list on ${SITE_HOST}. This is a one-time confirmation, not the newsletter.`,
+  });
 }
 
 const ORDER_NOTE = `You are receiving this because you have an order or reservation on ${SITE_HOST}. This is a transactional message, not marketing.`;

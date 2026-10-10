@@ -12,7 +12,7 @@ import {
 } from "../../lib/beehiiv";
 import { recordSignup, storeOn } from "../../lib/store";
 import { clientIp, rateLimited } from "../../lib/ratelimit";
-import { sendAlert } from "../../lib/email";
+import { emailOn, sendEmail, sendAlert, waitlistWelcomeEmail } from "../../lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,6 +58,15 @@ async function writeStore(store) {
     );
     return false;
   }
+}
+
+/* Signup confirmation via Resend. Best-effort and awaited, because a serverless
+   function may be frozen the moment the response is returned. A send failure is
+   logged for ops and never changes the answer the visitor gets. */
+async function sendWelcome(email) {
+  if (!emailOn) return;
+  const sent = await sendEmail({ to: email, ...waitlistWelcomeEmail() });
+  if (!sent.ok && !sent.skipped) console.error("[waitlist] confirmation email failed:", sent.error);
 }
 
 /* ============================================================
@@ -120,6 +129,7 @@ export async function POST(req) {
       return NextResponse.json({ ok: false, error: "Network error" }, { status: 502 });
     }
     if (res.ok) {
+      await sendWelcome(email);
       const count = await beehiivActiveCount();
       const total = count == null ? null : BASE + count;
       // Beehiiv exposes no per-subscriber position, so we can't honestly show a
@@ -166,6 +176,7 @@ export async function POST(req) {
       ip,
     });
     const persisted = await writeStore(store);
+    if (persisted || storeOn) await sendWelcome(email);
     // Nothing captured the signup: no Beehiiv, no Supabase, no writable disk.
     // Answering ok:true here would drop the lead silently, which is worse than
     // asking the visitor to retry. Only claim success if something stored it.

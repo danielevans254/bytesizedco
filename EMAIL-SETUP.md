@@ -16,7 +16,7 @@ variables are set, so you can turn them on one at a time.
 |---|---|---|
 | Receiving mail (your inbox) | `bytesizedco.com` | **Google Workspace, MX not yet in DNS** |
 | Beehiiv newsletter | `mail.bytesizedco.com` | not configured |
-| Resend transactional | `send.bytesizedco.com` | not configured |
+| Resend transactional | `bytesizedco.com` (return path on `send.`) | live: DKIM at root, MX and SPF on `send.` |
 
 Bulk sending reputation is scoped to the sending domain. If the newsletter ever
 collects spam complaints, that damage stays on `mail.` and never touches your
@@ -130,12 +130,14 @@ No code changes. Dashboard plus DNS.
 ## 4. Resend: transactional email from your domain
 
 This sends the pre-order reservation confirmation. Beehiiv still owns the
-newsletter and the waitlist welcome, so nothing here duplicates it.
+newsletter and the product-catalog verticals; every system email, starting with the
+signup confirmation, comes from Resend.
 
 1. In Resend, the domain is the root `bytesizedco.com` (added 2026-08-19, region
    ap-northeast-1). Resend puts its bounce MX and SPF on the `send.` subdomain and
    its DKIM key at `resend._domainkey` on the root.
-2. Resend shows MX, SPF and DKIM records. Add them in Vercel DNS. Verify.
+2. Resend shows three records: an MX and an SPF TXT on `send`, and a DKIM TXT at
+   `resend._domainkey`. Add them in Vercel DNS and press Verify.
 3. Create an API key.
 4. Set:
 
@@ -200,7 +202,7 @@ links you are posting.
 
 | Action | Beehiiv | Resend | Supabase |
 |---|---|---|---|
-| Landing waitlist signup | welcome email | nothing | `waitlist_signups` |
+| Landing waitlist signup | subscribe only, no welcome email | signup confirmation | `waitlist_signups` |
 | Demo checkout reservation | subscribe, tagged `Pre-order Intent` | reservation confirmation | `preorders` + `waitlist_signups` |
 | Waitlist signup lost (Beehiiv 5xx or nothing stored) | nothing | alert to `alerts@` | whatever it caught |
 | Paid order (after Stripe) | nothing | receipt, reply-to `billing@` | `preorders` |

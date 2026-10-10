@@ -47,7 +47,7 @@ preview builds don't pollute production analytics or emit production URLs.
 | `NEXT_PUBLIC_DROP_DEADLINE` | ISO 8601 drop deadline. The countdown strip and its nav link render only when this is set and still in the future. |
 | `NEXT_PUBLIC_SOCIAL_INSTAGRAM` / `_TIKTOK` / `_X` | Footer social links. A link is rendered only when its URL is set, so no dead links ship. |
 | `BEEHIIV_COHORT` | Cohort custom field value. Default `Founding Member`. |
-| `BEEHIIV_WELCOME_EMAIL` | `false` disables beehiiv's welcome email. |
+| `BEEHIIV_WELCOME_EMAIL` | `true` re-enables beehiiv's welcome email. Off by default: the signup confirmation is sent through Resend. |
 | `BEEHIIV_DOUBLE_OPT` | `on` / `off` / `not_set`. Default `off`. |
 | `RESEND_API_KEY` + `EMAIL_FROM` | Transactional email from your own domain. Both required or nothing sends. |
 | `EMAIL_REPLY_TO` | Where replies to transactional mail should land. |
