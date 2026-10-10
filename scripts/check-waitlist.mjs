@@ -10,7 +10,7 @@
  * .env.local but never added to Vercel, so beehiivOn was false and the route fell
  * through to the dev-only file store, which calls fs.mkdir into process.cwd().
  * Everything outside /tmp is read-only on Vercel, so that threw EROFS uncaught.
- * AUDIT-FIXES.md called this a silent no-op; it was a hard outage.
+ * docs/AUDIT-FIXES.md called this a silent no-op; it was a hard outage.
  *
  * The decisive signal is free: GET /api/waitlist reports which backend answered.
  * "local" against a deployed host means the file store is in play, and the file

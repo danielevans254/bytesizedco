@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import { PRODUCTS, getProduct } from "../products";
-import { SITE_URL } from "../../site";
-import ProductView from "../ProductView";
-import ProductModules from "../ProductModules";
-import RelatedProducts from "../RelatedProducts";
-import RecentlyViewed from "../RecentlyViewed";
+import { PRODUCTS, getProduct } from "@/features/shop/data/products";
+import { SITE_URL } from "@/lib/site";
+import ProductView from "@/features/shop/components/ProductView";
+import ProductModules from "@/features/shop/components/ProductModules";
+import RelatedProducts from "@/features/shop/components/RelatedProducts";
+import RecentlyViewed from "@/features/shop/components/RecentlyViewed";
 
 export function generateStaticParams() {
   return PRODUCTS.map((p) => ({ slug: p.slug }));

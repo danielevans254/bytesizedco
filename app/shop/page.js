@@ -1,7 +1,7 @@
-import { PRODUCTS } from "./products";
-import ShopBrowser from "./ShopBrowser";
-import RecentlyViewed from "./RecentlyViewed";
-import SectionLabel from "../ui/SectionLabel";
+import { PRODUCTS } from "@/features/shop/data/products";
+import ShopBrowser from "@/features/shop/components/ShopBrowser";
+import RecentlyViewed from "@/features/shop/components/RecentlyViewed";
+import SectionLabel from "@/components/ui/SectionLabel";
 
 export const metadata = {
   title: "Shop · Byte Sized Co.",

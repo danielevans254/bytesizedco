@@ -1,7 +1,7 @@
-import { CartProvider } from "./cart";
-import CartButton from "./CartButton";
-import CartDrawer from "./CartDrawer";
-import Brand from "../ui/Brand";
+import { CartProvider } from "@/features/shop/state/cart";
+import CartButton from "@/features/shop/components/CartButton";
+import CartDrawer from "@/features/shop/components/CartDrawer";
+import Brand from "@/components/ui/Brand";
 
 export default function ShopLayout({ children }) {
   return (

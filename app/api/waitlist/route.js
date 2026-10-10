@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 import {
   beehiivOn,
   beehiivSubscribe,
@@ -9,56 +7,17 @@ import {
   isAlreadySubscribed,
   cleanAttribution,
   sourceLabel,
-} from "../../lib/beehiiv";
-import { recordSignup, storeOn } from "../../lib/store";
-import { clientIp, rateLimited } from "../../lib/ratelimit";
-import { emailOn, sendEmail, sendAlert, waitlistWelcomeEmail } from "../../lib/email";
+} from "@/lib/integrations/beehiiv";
+import { recordSignup, storeOn } from "@/lib/integrations/store";
+import { clientIp, rateLimited } from "@/lib/ratelimit";
+import { emailOn, sendEmail, sendAlert, waitlistWelcomeEmail } from "@/lib/email";
+import { isValidEmail } from "@/lib/validation";
+import { queue, readStore, writeStore } from "@/lib/waitlist/localStore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const BASE = 0; // counter reflects only real subscribers
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/* ============================================================
-   LOCAL FILE FALLBACK (when Beehiiv env vars are absent)
-   ============================================================ */
-const DATA_DIR = path.join(process.cwd(), "data");
-const FILE = path.join(DATA_DIR, "waitlist.json");
-
-let chain = Promise.resolve();
-function queue(task) {
-  const run = chain.then(task, task);
-  chain = run.then(() => undefined, () => undefined);
-  return run;
-}
-async function readStore() {
-  try {
-    const json = JSON.parse(await fs.readFile(FILE, "utf8"));
-    if (!Array.isArray(json.entries)) json.entries = [];
-    return json;
-  } catch {
-    return { entries: [] };
-  }
-}
-/* Reports failure instead of throwing. This fallback is a dev convenience, but it
-   also runs in production whenever the Beehiiv env vars are absent, and on Vercel
-   everything outside /tmp is read-only. An uncaught EROFS here 500s the request and
-   takes the whole waitlist down, which is exactly what happened on 2026-10-08. */
-async function writeStore(store) {
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.writeFile(FILE, JSON.stringify(store, null, 2));
-    return true;
-  } catch (e) {
-    console.error(
-      "[waitlist] cannot persist signup: Beehiiv is not configured and the filesystem is read-only. " +
-        "Set BEEHIIV_API_KEY and BEEHIIV_PUBLICATION_ID in this environment.",
-      String(e?.message || e)
-    );
-    return false;
-  }
-}
 
 /* Signup confirmation via Resend. Best-effort and awaited, because a serverless
    function may be frozen the moment the response is returned. A send failure is
@@ -108,7 +67,7 @@ export async function POST(req) {
   // bot filled the hidden field → pretend success, store nothing
   if (honeypot) return NextResponse.json({ ok: true, total: BASE });
 
-  if (!EMAIL_RE.test(email) || email.length > 200) {
+  if (!isValidEmail(email)) {
     return NextResponse.json({ ok: false, error: "Enter a valid email" }, { status: 400 });
   }
 

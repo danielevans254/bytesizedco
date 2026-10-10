@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
-import { useCart } from "../cart";
-import ProductArt from "../ProductArt";
-import { readAttribution, track } from "../../attribution";
+import { useCart } from "@/features/shop/state/cart";
+import ProductArt from "@/features/shop/components/ProductArt";
+import { readAttribution, track } from "@/lib/attribution";
 
 export default function Checkout() {
   const { items, subtotal, setQty, remove, clear, count, FREE_SHIP } = useCart();

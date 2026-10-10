@@ -4,7 +4,7 @@
  *   node scripts/check-email-dns.mjs            # defaults to bytesizedco.com
  *   node scripts/check-email-dns.mjs other.co
  *
- * Checks the subdomain split described in EMAIL-SETUP.md:
+ * Checks the subdomain split described in docs/EMAIL-SETUP.md:
  *   <domain>         Google Workspace inbox (MX, SPF, DKIM at google._domainkey)
  *   mail.<domain>  Beehiiv newsletter
  *   send.<domain>  Resend transactional
@@ -95,7 +95,7 @@ async function checkOwnership() {
   if (inbox.length) {
     line(PASS, `root domain can receive mail, ${inbox.length} MX`, inbox.map((m) => `${m.exchange} (pref ${m.priority})`).join(", "));
   } else {
-    line(FAIL, "root domain has no MX: you cannot receive email", `Nothing can reach hello@${domain}. Set up an inbox first (see EMAIL-SETUP.md step 1).`);
+    line(FAIL, "root domain has no MX: you cannot receive email", `Nothing can reach hello@${domain}. Set up an inbox first (see docs/EMAIL-SETUP.md step 1).`);
   }
 }
 

@@ -1,5 +1,5 @@
-import { PRODUCTS } from "./shop/products";
-import { SITE_URL } from "./site";
+import { PRODUCTS } from "@/features/shop/data/products";
+import { SITE_URL } from "@/lib/site";
 
 // /shop/checkout is deliberately absent: it is a transactional dead end, not a
 // page worth indexing.

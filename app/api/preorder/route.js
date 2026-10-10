@@ -5,16 +5,16 @@ import {
   beehiivError,
   isAlreadySubscribed,
   cleanAttribution,
-} from "../../lib/beehiiv";
-import { recordPreorder, recordSignup } from "../../lib/store";
-import { emailOn, sendEmail, preorderEmail } from "../../lib/email";
-import { clientIp, rateLimited } from "../../lib/ratelimit";
-import { FREE_SHIP } from "../../shop/config";
+} from "@/lib/integrations/beehiiv";
+import { recordPreorder, recordSignup } from "@/lib/integrations/store";
+import { emailOn, sendEmail, reservationEmail } from "@/lib/email";
+import { isValidEmail } from "@/lib/validation";
+import { clientIp, rateLimited } from "@/lib/ratelimit";
+import { FREE_SHIP } from "@/features/shop/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_ITEMS = 50;
 
 /* Line items arrive from the client cart, so treat every field as untrusted:
@@ -54,7 +54,7 @@ export async function POST(req) {
   // bot filled the hidden field → pretend success, store nothing
   if (honeypot) return NextResponse.json({ ok: true });
 
-  if (!EMAIL_RE.test(email) || email.length > 200) {
+  if (!isValidEmail(email)) {
     return NextResponse.json({ ok: false, error: "Enter a valid email" }, { status: 400 });
   }
   if (!name) {
@@ -108,7 +108,7 @@ export async function POST(req) {
   // action, so there is no double-email here.
   let emailed = false;
   if (emailOn) {
-    const sent = await sendEmail({ to: email, ...preorderEmail({ name, items, total }) });
+    const sent = await sendEmail({ to: email, ...reservationEmail({ name, items, total }) });
     emailed = Boolean(sent.ok);
     if (!sent.ok && !sent.skipped) console.error("[preorder] confirmation email failed:", sent.error);
   }

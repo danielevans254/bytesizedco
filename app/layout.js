@@ -1,9 +1,9 @@
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
-import { SITE_URL } from "./site";
-import "./design-system/tokens.css";
-import "./globals.css";
-import "./design-system/primitives.css";
+import { SITE_URL } from "@/lib/site";
+import "@/styles/design-system/tokens.css";
+import "@/styles/globals.css";
+import "@/styles/design-system/primitives.css";
 
 /* ---- analytics ----
    Plausible: cookieless and privacy-friendly, so there is no consent banner to

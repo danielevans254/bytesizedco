@@ -12,7 +12,7 @@ npm run check:dns  # verify email DNS for bytesizedco.com
 ```
 
 Domain: **bytesizedco.com** (DNS on Vercel nameservers ns1/ns2.vercel-dns.com). Email setup, including the
-`mail.` / `send.` sending split, is in **[EMAIL-SETUP.md](./EMAIL-SETUP.md)**.
+`mail.` / `send.` sending split, is in **[docs/EMAIL-SETUP.md](./docs/EMAIL-SETUP.md)**.
 
 ## Waitlist → Beehiiv
 
@@ -54,7 +54,7 @@ preview builds don't pollute production analytics or emit production URLs.
 | `COMPANY_POSTAL_ADDRESS` | Appended to transactional email footers (CAN-SPAM). |
 | `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` | Your own copy of every signup. Both required or persistence is skipped. |
 
-Full walkthrough including DNS records: **[EMAIL-SETUP.md](./EMAIL-SETUP.md)**.
+Full walkthrough including DNS records: **[docs/EMAIL-SETUP.md](./docs/EMAIL-SETUP.md)**.
 
 > `SUPABASE_SERVICE_ROLE_KEY` bypasses row level security. It is server-only.
 > Never prefix it with `NEXT_PUBLIC_` and never touch it from a client component.
@@ -70,8 +70,8 @@ subscribes the buyer to beehiiv tagged `Pre-order Intent`, and sends a
 confirmation via Resend. Totals are **recomputed server-side** from the line
 items rather than trusted from the request.
 
-Server helpers live in `app/lib/`: `beehiiv.js` (list), `store.js` (own copy),
-`email.js` (Resend + templates), `ratelimit.js`. Each is env-gated and
+Server helpers live in `lib/`: `beehiiv.js` (list), `store.js` (own copy),
+`email/` (Resend sender + templates, see `lib/email/README.md`), `ratelimit.js`. Each is env-gated and
 best-effort, so an outage in any one of them costs a row, never a signup.
 
 Includes: email validation, honeypot (`website` field), and a per-IP rate
@@ -82,14 +82,14 @@ it to the beehiiv `Source` custom field, so the client can never write an
 arbitrary value into a subscriber record.
 
 `attribution` carries the UTMs captured on the visitor's landing page
-(`app/attribution.js` stores them in `sessionStorage` on first touch). The route
+(`lib/attribution.js` stores them in `sessionStorage` on first touch). The route
 sanitises them and forwards them as beehiiv's native `utm_*` params, so
 subscribers are attributable to the channel that actually produced them. Without
 it every subscriber would look identical.
 
 ## Analytics events
 
-Fired through `track()` in `app/attribution.js`; no-ops unless Plausible is configured.
+Fired through `track()` in `lib/attribution.js`; no-ops unless Plausible is configured.
 
 - `waitlist_submit` — props: `source`, `returning`. This is the Gate 1 conversion.
 - `preorder_intent` — props: `items`, `value`. Fired from the demo checkout.
