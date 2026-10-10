@@ -14,3 +14,6 @@ npm-debug.log*
 # ...but the template carries no secrets and must be committed. This negation has
 # to come after every .env* rule above, or it has no effect.
 !.env.example
+
+.vercel
+.env*

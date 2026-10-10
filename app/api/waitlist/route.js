@@ -12,6 +12,7 @@ import {
 } from "../../lib/beehiiv";
 import { recordSignup, storeOn } from "../../lib/store";
 import { clientIp, rateLimited } from "../../lib/ratelimit";
+import { sendAlert } from "../../lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -114,7 +115,8 @@ export async function POST(req) {
     let res;
     try {
       res = await beehiivSubscribe(email, { interests, attribution, source });
-    } catch {
+    } catch (e) {
+      await sendAlert("waitlist: Beehiiv unreachable", { email, source, error: String(e?.message || e) });
       return NextResponse.json({ ok: false, error: "Network error" }, { status: 502 });
     }
     if (res.ok) {
@@ -133,6 +135,11 @@ export async function POST(req) {
       return NextResponse.json({ ok: true, alreadyJoined: true, number: null, total });
     }
     const status = res.status >= 400 && res.status < 500 ? 400 : 502;
+    // A 5xx is Beehiiv's fault, not the visitor's, and loses the signup unless
+    // Supabase caught it. A 4xx is usually a bad address and stays quiet.
+    if (status === 502) {
+      await sendAlert("waitlist: Beehiiv rejected a signup", { email, source, status: res.status, error: msg, savedToSupabase: storeOn });
+    }
     return NextResponse.json({ ok: false, error: msg }, { status });
   }
 
@@ -163,6 +170,8 @@ export async function POST(req) {
     // Answering ok:true here would drop the lead silently, which is worse than
     // asking the visitor to retry. Only claim success if something stored it.
     if (!persisted && !storeOn) {
+      // The 2026-10-08 outage looked exactly like this: no Beehiiv env on Vercel.
+      await sendAlert("waitlist: signup not stored anywhere", { email, source, beehiivOn, storeOn });
       return NextResponse.json(
         { ok: false, error: "Could not save your signup just now. Please try again shortly." },
         { status: 503 }

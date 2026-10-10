@@ -108,8 +108,7 @@ export async function POST(req) {
   // action, so there is no double-email here.
   let emailed = false;
   if (emailOn) {
-    const { subject, html, text } = preorderEmail({ name, items, total });
-    const sent = await sendEmail({ to: email, subject, html, text });
+    const sent = await sendEmail({ to: email, ...preorderEmail({ name, items, total }) });
     emailed = Boolean(sent.ok);
     if (!sent.ok && !sent.skipped) console.error("[preorder] confirmation email failed:", sent.error);
   }

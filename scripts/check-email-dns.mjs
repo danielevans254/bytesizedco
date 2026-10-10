@@ -12,10 +12,10 @@
  *
  * No dependencies: Node's built-in resolver only. Read-only, safe to re-run.
  *
- * Beehiiv and Resend DKIM is not checked. Their selectors are generated per
- * publication, so there is no name to look up without your dashboard in front of
- * you. Google Workspace DKIM uses the fixed selector google._domainkey, so that
- * one is checked.
+ * Google and Resend DKIM use fixed selectors (google._domainkey,
+ * resend._domainkey), so both are checked. Beehiiv sends through SendGrid, which
+ * handles SPF and DKIM with per-publication CNAMEs instead of a TXT on mail.<domain>;
+ * BEEHIIV_CNAMES lists this publication's, copied from Beehiiv > Settings > Domain.
  */
 
 import { Resolver } from "node:dns/promises";
@@ -51,6 +51,26 @@ async function txt(name) {
     return [];
   }
 }
+
+async function cname(name) {
+  try {
+    return (await resolver.resolveCname(name))[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+// From Beehiiv > Settings > Domain for this publication (2026-10-09). Sending
+// records first, then the two branded-link records.
+const BEEHIIV_CNAMES = [
+  "em4125.mail",
+  "292._domainkey.mail",
+  "2922._domainkey.mail",
+  "bh1234._domainkey.mail",
+  "bh1234.mail",
+  "elinkdb9.mail",
+  "112977122.mail",
+];
 
 async function mx(name) {
   try {
@@ -146,8 +166,29 @@ async function checkSender(label, host, { expectMx }) {
 await checkOwnership();
 await checkRootSender();
 await checkDmarc();
-await checkSender("Beehiiv newsletter", `mail.${domain}`, { expectMx: false });
+async function checkBeehiiv() {
+  console.log(`
+-- Beehiiv newsletter (SendGrid): mail.${domain}`);
+  if (domain !== DEFAULT_DOMAIN) {
+    line(WARN, "Beehiiv records skipped", "BEEHIIV_CNAMES is specific to bytesizedco.com.");
+    return;
+  }
+  for (const name of BEEHIIV_CNAMES) {
+    const target = await cname(`${name}.${domain}`);
+    if (target) line(PASS, `${name} CNAME`, target);
+    else line(FAIL, `${name} CNAME missing`, "Copy it from Beehiiv > Settings > Domain.");
+  }
+}
+
+async function checkResendDkim() {
+  const dkim = await txt(`resend._domainkey.${domain}`);
+  if (dkim.some((r) => r.startsWith("p="))) line(PASS, "Resend DKIM present (resend._domainkey)");
+  else line(FAIL, "Resend DKIM missing", "Resend > Domains > bytesizedco.com: copy the resend._domainkey TXT value.");
+}
+
+await checkBeehiiv();
 await checkSender("Resend transactional", `send.${domain}`, { expectMx: true });
+await checkResendDkim();
 
 console.log(
   `\n${failures} failing, ${warnings} warning(s).` +

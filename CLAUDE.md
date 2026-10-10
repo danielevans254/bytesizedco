@@ -9,10 +9,10 @@ curated-commerce brand. This is a **prototype** — no real payments. The only l
 waitlist and preorder routes, each env-gated (Beehiiv list, optional Supabase copy, optional Resend
 mail). The strategy/brainstorm knowledge base lives in a separate Obsidian vault at
 `../bytesizeco` (markdown only; not part of this app). This directory is its own git repo
-(branch `main`; remote `danielevans254/bytesizedco`, moving to `bytesizedco/bytesizedco`), nested inside the
+(branch `main`; remote `bytesizedco/bytesizedco`), nested inside the
 untracked workspace at `..`; the workspace-level `../CLAUDE.md` describes the surrounding folders.
 
-Deploys go to Vercel team `byte-sized-co`, project `bytesizedco` (`.vercel/project.json`, `vercel.json`).
+Deploys go to Vercel team `byte-sized-co`, project `bytesizedco-cww5`, which auto-deploys `main` from GitHub (`.vercel/project.json`, `vercel.json`).
 The workspace skill `/deploy-web` and `../.claude/memory/vercel-project.md` hold the account rules,
 including the Hobby-plan author check that blocks deployments authored by `danielevans254`.
 

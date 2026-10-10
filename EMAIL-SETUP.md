@@ -132,19 +132,23 @@ No code changes. Dashboard plus DNS.
 This sends the pre-order reservation confirmation. Beehiiv still owns the
 newsletter and the waitlist welcome, so nothing here duplicates it.
 
-1. Create a Resend account and add the domain `send.bytesizedco.com`.
+1. In Resend, the domain is the root `bytesizedco.com` (added 2026-08-19, region
+   ap-northeast-1). Resend puts its bounce MX and SPF on the `send.` subdomain and
+   its DKIM key at `resend._domainkey` on the root.
 2. Resend shows MX, SPF and DKIM records. Add them in Vercel DNS. Verify.
 3. Create an API key.
 4. Set:
 
 ```
 RESEND_API_KEY=re_xxxxxxxx
-EMAIL_FROM=Byte Sized Co. <hello@send.bytesizedco.com>
+EMAIL_FROM=Byte Sized Co. <hello@bytesizedco.com>
 EMAIL_REPLY_TO=support@bytesizedco.com
 COMPANY_POSTAL_ADDRESS=Byte Sized Co., 1 Example St, City, ST 00000
 ```
 
-`EMAIL_FROM` must use the verified `send.` subdomain or Resend rejects the send.
+`EMAIL_FROM` must be an address on the verified domain (`@bytesizedco.com`), or
+Resend rejects the send. Do not use `@send.bytesizedco.com`: that subdomain only
+carries the bounce records.
 `EMAIL_REPLY_TO` uses the **root** domain so replies land in the `support@` group from
 step 1, since every reply to a reservation email is a support question.
 
@@ -152,7 +156,8 @@ step 1, since every reply to a reservation email is a support question.
 exempt from CAN-SPAM's unsubscribe requirement, but a real postal address is the
 safe default and you need one on file once the LLC exists.
 
-Templates live in `app/lib/email.js`. Brand rules apply to that copy exactly as
+Templates live in `app/lib/email.js` (Resend) and `BEEHIIV-TEMPLATES.md` (Beehiiv,
+pasted into its editor). Brand rules apply to that copy exactly as
 they do on the site: no em-dashes, no emoji, dark palette, one accent.
 
 ---
@@ -197,6 +202,8 @@ links you are posting.
 |---|---|---|---|
 | Landing waitlist signup | welcome email | nothing | `waitlist_signups` |
 | Demo checkout reservation | subscribe, tagged `Pre-order Intent` | reservation confirmation | `preorders` + `waitlist_signups` |
+| Waitlist signup lost (Beehiiv 5xx or nothing stored) | nothing | alert to `alerts@` | whatever it caught |
+| Paid order (after Stripe) | nothing | receipt, reply-to `billing@` | `preorders` |
 
 The split is deliberate. Nothing fires twice for one action.
 
